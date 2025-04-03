@@ -32,10 +32,22 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     return (savedLanguage === 'ar' ? 'ar' : 'en') as 'en' | 'ar';
   });
   
-  // Persist language changes to localStorage
+  // Persist language changes to localStorage and update document direction
   const handleSetLanguage = (lang: 'en' | 'ar') => {
     localStorage.setItem('language', lang);
     setLanguage(lang);
+    
+    // Update document direction and language attributes
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+    
+    // Add a transition class to the body for animation
+    document.body.classList.add('language-transition');
+    
+    // Remove the transition class after animation completes
+    setTimeout(() => {
+      document.body.classList.remove('language-transition');
+    }, 1000);
   };
 
   return (

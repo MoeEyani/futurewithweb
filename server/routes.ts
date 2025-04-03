@@ -10,16 +10,54 @@ import {
   insertAnalyticsEventSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
+import { sendContactFormNotification, sendContactFormAutoResponse } from "./services/email";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Contact form submission
   app.post('/api/contact', async (req, res) => {
     try {
       const validatedData = insertContactSubmissionSchema.parse(req.body);
+      
+      // Store submission in database
       const submission = await storage.createContactSubmission(validatedData);
+      
+      // Send notification email to CEO
+      let emailSent = false;
+      let autoResponseSent = false;
+      
+      try {
+        // Send email to CEO
+        emailSent = await sendContactFormNotification(
+          validatedData.name,
+          validatedData.email,
+          validatedData.message,
+          validatedData.phone,
+          validatedData.company
+        );
+        
+        // Send auto-response to the user
+        autoResponseSent = await sendContactFormAutoResponse(
+          validatedData.name,
+          validatedData.email
+        );
+      } catch (emailError) {
+        console.error('Error sending contact form emails:', emailError);
+        // Continue execution even if email fails
+      }
+      
       res.status(201).json({
         success: true,
-        data: submission
+        data: {
+          submission,
+          emailNotification: {
+            sent: emailSent,
+            recipient: 'CEO@futurewith.co'
+          },
+          autoResponse: {
+            sent: autoResponseSent
+          }
+        },
+        message: 'Your message has been sent successfully.'
       });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -29,6 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errors: error.errors
         });
       } else {
+        console.error('Contact form submission error:', error);
         res.status(500).json({
           success: false,
           message: 'An error occurred while processing your request'

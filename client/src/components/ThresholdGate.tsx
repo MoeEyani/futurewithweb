@@ -2,7 +2,8 @@ import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '@/context/AppContext';
 import ParticleBackground from './ParticleBackground';
 import { motion } from 'framer-motion';
-import { Check, X, Languages } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import LanguageToggle from '@/components/ui/language-toggle';
 
 interface ThresholdGateProps {
   onEnterSite: (userType: 'leader' | 'follower' | 'guest') => void;
@@ -49,16 +50,11 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
     onEnterSite(userType);
   };
 
-  const toggleLanguage = () => {
-    const newLanguage = language === 'en' ? 'ar' : 'en';
-    setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
-    console.log('Language changed to:', newLanguage);
-  };
-
-  // Save language to localStorage anytime it changes
+  // No need for toggleLanguage function as we're using LanguageToggle component
+  
+  // Debug language changes
   useEffect(() => {
-    localStorage.setItem('language', language);
+    console.log('Language changed to:', language);
   }, [language]);
 
   return (
@@ -90,14 +86,9 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
       <ParticleBackground targetCenter={true} />
       
       {/* Language toggle button */}
-      <button 
-        onClick={toggleLanguage}
-        className="absolute top-5 right-5 z-20 bg-blue-600/50 hover:bg-blue-700/50 px-3 py-2 rounded-md flex items-center text-white transition-colors"
-        title={language === 'en' ? 'Switch to Arabic' : 'Switch to English'}
-      >
-        <Languages className="w-5 h-5 mr-2" />
-        {language === 'en' ? 'العربية' : 'English'}
-      </button>
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageToggle variant="button" />
+      </div>
       
       <div className="relative z-10 flex flex-col items-center justify-center h-screen px-6 text-center" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <motion.p 

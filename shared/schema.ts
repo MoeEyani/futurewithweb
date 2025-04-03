@@ -20,6 +20,7 @@ export const contactSubmissions = pgTable("contact_submissions", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   company: text("company").notNull(),
+  phone: text("phone"),
   message: text("message").notNull(),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
@@ -28,6 +29,7 @@ export const insertContactSubmissionSchema = createInsertSchema(contactSubmissio
   name: true,
   email: true,
   company: true,
+  phone: true,
   message: true,
 });
 

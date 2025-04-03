@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AppContext } from '@/context/AppContext';
-import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import { Phone, Mail, MapPin, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -10,11 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 const contactFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
   company: z.string().min(1, 'Company is required'),
+  phone: z.string().optional(),
   message: z.string().min(10, 'Message must be at least 10 characters'),
 });
 
@@ -59,6 +61,7 @@ const ContactSection: React.FC = () => {
       name: '',
       email: '',
       company: '',
+      phone: '',
       message: '',
     },
   });
@@ -66,31 +69,42 @@ const ContactSection: React.FC = () => {
   async function onSubmit(data: ContactFormValues) {
     setIsSubmitting(true);
     try {
-      // This would normally be a real API call to the server
-      // which would then forward the message to CEO@futurewith.co
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Submit form data to the server
+      const response = await apiRequest('POST', '/api/contact', data);
       
-      // For development, let the user know where the email would be sent
-      toast({
-        title: language === 'en' ? 'Message sent successfully!' : 'تم إرسال الرسالة بنجاح!',
-        description: language === 'en' 
-          ? 'Your inquiry has been forwarded to CEO@futurewith.co' 
-          : 'تم إرسال استفسارك إلى CEO@futurewith.co',
-        variant: 'default',
-      });
+      const responseData = await response.json();
       
-      // Open email client as a fallback for development environment
-      const subject = encodeURIComponent(`Inquiry from ${data.name} at ${data.company}`);
-      const body = encodeURIComponent(`Name: ${data.name}\nCompany: ${data.company}\nEmail: ${data.email}\n\n${data.message}`);
-      window.open(`mailto:CEO@futurewith.co?subject=${subject}&body=${body}`);
-      
-      form.reset();
+      if (responseData.success) {
+        // Show success message
+        toast({
+          title: language === 'en' ? 'Message sent successfully!' : 'تم إرسال الرسالة بنجاح!',
+          description: language === 'en' 
+            ? 'Thank you for reaching out. We will contact you soon.' 
+            : 'شكرًا للتواصل معنا. سنتصل بك قريبًا.',
+          variant: 'default',
+        });
+        
+        // Reset form after successful submission
+        form.reset();
+      } else {
+        // Show error message if the API indicates failure
+        toast({
+          title: language === 'en' ? 'Error' : 'خطأ',
+          description: responseData.message || (language === 'en' 
+            ? 'There was a problem sending your message.' 
+            : 'حدثت مشكلة في إرسال رسالتك.'),
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
+      console.error('Contact form submission error:', error);
+      
+      // Show error message
       toast({
         title: language === 'en' ? 'Error' : 'خطأ',
         description: language === 'en' 
-          ? 'There was a problem sending your message.' 
-          : 'حدثت مشكلة في إرسال رسالتك.',
+          ? 'There was a problem connecting to the server. Please try again later.' 
+          : 'حدثت مشكلة في الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقًا.',
         variant: 'destructive',
       });
     } finally {
@@ -227,6 +241,26 @@ const ContactSection: React.FC = () => {
                   
                   <FormField
                     control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {language === 'en' ? 'Phone (optional)' : 'الهاتف (اختياري)'}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder={language === 'en' ? 'Enter your phone number' : 'أدخل رقم هاتفك'} 
+                            type="tel"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
                     name="message"
                     render={({ field }) => (
                       <FormItem>
@@ -251,8 +285,17 @@ const ContactSection: React.FC = () => {
                     disabled={isSubmitting}
                     style={{ backgroundColor: '#F05454' }}
                   >
-                    {language === 'en' ? 'Submit Inquiry' : 'إرسال الاستفسار'}
-                    {!isSubmitting && <ArrowRight className="ml-2 h-4 w-4" />}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                        {language === 'en' ? 'Sending...' : 'جارٍ الإرسال...'}
+                      </>
+                    ) : (
+                      <>
+                        {language === 'en' ? 'Submit Inquiry' : 'إرسال الاستفسار'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

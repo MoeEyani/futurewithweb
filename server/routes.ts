@@ -31,7 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           validatedData.name,
           validatedData.email,
           validatedData.message,
-          validatedData.phone,
+          validatedData.phone || undefined,
           validatedData.company
         );
         

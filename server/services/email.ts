@@ -2,30 +2,48 @@ import nodemailer from 'nodemailer';
 
 // Define a transporter for nodemailer
 let transporter: nodemailer.Transporter | null = null;
+let testAccount: any = null; // For ethereal email testing
 
-// Initialize the mail service with SMTP configuration
-export function initializeMailService() {
+// Initialize the mail service with SMTP configuration or fallback to test account
+export async function initializeMailService() {
   try {
-    // Check if we have the required email credentials
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.warn('Email credentials missing, email functionality will be disabled');
-      console.warn('Please set EMAIL_USER and EMAIL_PASSWORD environment variables');
-      return false;
+    // If we're in production and have credentials, use real SMTP
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD && process.env.NODE_ENV === 'production') {
+      // Create reusable transporter object using SMTP settings
+      transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',   // Default to Gmail
+        port: parseInt(process.env.EMAIL_PORT || '587'),    // Default SMTP port
+        secure: process.env.EMAIL_SECURE === 'true',        // true for 465, false for other ports
+        auth: {
+          user: process.env.EMAIL_USER,                     // Your email address 
+          pass: process.env.EMAIL_PASSWORD,                 // Your email password
+        }
+      });
+      
+      console.log('Email service initialized with real SMTP transport');
+      return true;
+    } 
+    // Otherwise use test account (development/testing environment)
+    else {
+      // Generate test SMTP service account for development (doesn't actually send emails)
+      console.log('Creating ethereal test account for email testing...');
+      testAccount = await nodemailer.createTestAccount();
+      
+      // Create reusable transporter using the test account
+      transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      
+      console.log('Email service initialized with test account');
+      console.log('Test account credentials:', { user: testAccount.user, pass: testAccount.pass });
+      return true;
     }
-
-    // Create reusable transporter object using SMTP settings
-    transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.spacemail.com',  // Default to SpaceMail SMTP
-      port: parseInt(process.env.EMAIL_PORT || '587'),      // Default SMTP port
-      secure: process.env.EMAIL_SECURE === 'true',          // true for 465, false for other ports
-      auth: {
-        user: process.env.EMAIL_USER,                       // Your email address
-        pass: process.env.EMAIL_PASSWORD,                   // Your email password
-      },
-    });
-
-    console.log('Email service initialized with SMTP transport');
-    return true;
   } catch (error) {
     console.error('Failed to initialize email service:', error);
     return false;
@@ -49,7 +67,9 @@ export async function sendEmail(params: EmailMessage): Promise<boolean> {
   try {
     // Ensure transporter is initialized
     if (!transporter) {
-      if (!initializeMailService()) {
+      const initialized = await initializeMailService();
+      
+      if (!initialized) {
         console.warn('Email not sent: mail service not initialized');
         return false;
       }
@@ -78,7 +98,14 @@ export async function sendEmail(params: EmailMessage): Promise<boolean> {
     
     // Send the email
     const info = await transporter.sendMail(mailOptions);
+    
     console.log(`Email sent to ${params.to}, message ID: ${info.messageId}`);
+    
+    // If using Ethereal (test account), provide the URL to view the email in browser
+    if (testAccount) {
+      console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+    }
+    
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);
@@ -91,8 +118,8 @@ export async function sendContactFormNotification(
   name: string,
   email: string,
   message: string,
-  phone?: string,
-  company?: string
+  phone: string | undefined,
+  company: string
 ): Promise<boolean> {
   const ceoEmail = 'CEO@futurewith.co';
   const notificationEmail = 'info@futurewith.co';

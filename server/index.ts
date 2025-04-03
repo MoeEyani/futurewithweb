@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 
 (async () => {
   // Initialize services
-  initializeMailService();
+  await initializeMailService();
   
   const server = await registerRoutes(app);
 

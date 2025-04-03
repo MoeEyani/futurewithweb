@@ -2,9 +2,14 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
+import Admin from "@/pages/Admin";
+import NotFound from "@/pages/not-found";
 import { useEffect, useContext, useState } from "react";
+import { Route, Switch } from "wouter";
 import ThresholdGate from "./components/ThresholdGate";
 import { AppContext } from "./context/AppContext";
+import { ChatAssistant } from "./components/chat/ChatAssistant";
+import { PhilosophySnippet } from "./components/micro-interactions/PhilosophySnippet";
 
 function App() {
   const { userType, setUserType, language, setLanguage } = useContext(AppContext);
@@ -30,7 +35,7 @@ function App() {
     if (gatewayChoice === 'entered' && gatewayTimestamp && 
         (Date.now() - parseInt(gatewayTimestamp)) < 86400000) {
       // Uncomment this line when you want to enable gateway skipping:
-      // setShowGateway(false);
+      setShowGateway(false);
       if (savedUserType) {
         setUserType(savedUserType);
       }
@@ -64,7 +69,18 @@ function App() {
       {showGateway ? (
         <ThresholdGate onEnterSite={handleEnterSite} />
       ) : (
-        <Home />
+        <>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/admin" component={Admin} />
+            <Route path="/admin/:tab" component={Admin} />
+            <Route component={NotFound} />
+          </Switch>
+          
+          {/* Global interactive components */}
+          <ChatAssistant />
+          <PhilosophySnippet />
+        </>
       )}
       <Toaster />
     </QueryClientProvider>

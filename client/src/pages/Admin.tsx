@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useAppContext } from "@/context/AppContext";
+import { useContext } from "react";
+import { AppContext } from "@/context/AppContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientsOverview from "@/components/admin/ClientsOverview";
 import ClientJourney from "@/components/admin/ClientJourney";
@@ -21,7 +22,7 @@ const queryClient = new QueryClient();
 
 const AdminDashboard = () => {
   const [location, setLocation] = useLocation();
-  const { language } = useAppContext();
+  const { language } = useContext(AppContext);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
   const isRtl = language === 'ar';
@@ -159,7 +160,7 @@ const AdminDashboard = () => {
 
           <QueryClientProvider client={queryClient}>
             <Switch>
-              <Route path="/admin" exact>
+              <Route path="/admin">
                 <ClientsOverview />
               </Route>
               <Route path="/admin/clients">

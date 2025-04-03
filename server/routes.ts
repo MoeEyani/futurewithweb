@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -10,6 +10,10 @@ import {
   insertAnalyticsEventSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
+import OpenAI from "openai";
+
+// Create a server-side OpenAI instance
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Contact form submission
@@ -405,6 +409,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: 'An error occurred while processing your request'
+      });
+    }
+  });
+  
+  // OpenAI API proxy
+  app.post('/api/openai-proxy', async (req, res) => {
+    try {
+      const { endpoint, params } = req.body;
+      
+      if (endpoint === 'chat.completions.create') {
+        const response = await openai.chat.completions.create(params);
+        res.status(200).json(response);
+      } else if (endpoint === 'images.generate') {
+        const response = await openai.images.generate(params);
+        res.status(200).json(response);
+      } else {
+        res.status(400).json({
+          success: false,
+          message: 'Unsupported endpoint'
+        });
+      }
+    } catch (error) {
+      console.error('OpenAI proxy error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error processing OpenAI request',
+        error: error.message
       });
     }
   });

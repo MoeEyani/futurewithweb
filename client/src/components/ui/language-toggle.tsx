@@ -1,33 +1,48 @@
-import React, { useContext } from 'react';
-import { AppContext } from '@/context/AppContext';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useContext, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { AppContext } from "@/context/AppContext";
 
-interface LanguageToggleProps {
-  className?: string;
-}
-
-const LanguageToggle: React.FC<LanguageToggleProps> = ({ className = '' }) => {
+const LanguageToggle = () => {
   const { language, setLanguage } = useContext(AppContext);
-
+  
+  // Toggle between English and Arabic
   const toggleLanguage = () => {
-    const newLanguage = language === 'en' ? 'ar' : 'en';
-    setLanguage(newLanguage);
-    document.documentElement.dir = newLanguage === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = newLanguage;
+    const newLang = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLang);
+    
+    // Apply RTL/LTR to document
+    if (newLang === 'ar') {
+      document.documentElement.dir = 'rtl';
+      document.documentElement.lang = 'ar';
+    } else {
+      document.documentElement.dir = 'ltr';
+      document.documentElement.lang = 'en';
+    }
   };
 
+  // Set initial direction based on current language
+  useEffect(() => {
+    if (language === 'ar') {
+      document.documentElement.dir = 'rtl';
+      document.documentElement.lang = 'ar';
+    } else {
+      document.documentElement.dir = 'ltr';
+      document.documentElement.lang = 'en';
+    }
+  }, [language]);
+
   return (
-    <div className={`flex items-center ${language === 'ar' ? 'space-x-2 space-x-reverse' : 'space-x-2'} ${className}`} dir="ltr">
-      <span className="text-sm font-medium">EN</span>
-      <Switch
-        checked={language === 'ar'}
-        onCheckedChange={toggleLanguage}
-        aria-label="Toggle language"
-      />
-      <span className="text-sm font-medium">AR</span>
-    </div>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={toggleLanguage}
+      className="px-2 text-sm"
+      aria-label={language === 'en' ? 'Switch to Arabic' : 'Switch to English'}
+    >
+      {language === 'en' ? 'عربي' : 'English'}
+    </Button>
   );
 };
 
+export { LanguageToggle };
 export default LanguageToggle;

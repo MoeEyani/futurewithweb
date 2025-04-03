@@ -1,13 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { useContext } from "react";
-import { AppContext } from "@/context/AppContext";
-import { Client } from "@shared/schema";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { 
   Table, 
   TableBody, 
@@ -17,369 +13,441 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { 
-  BarChart3, 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Users, 
   Search, 
-  Plus, 
-  ArrowUpRight, 
-  Filter,
-  Users,
-  Building,
-  Calendar
+  MoreHorizontal, 
+  UserPlus, 
+  Eye, 
+  Building, 
+  UserCheck 
 } from "lucide-react";
-import { format } from "date-fns";
-import { ar, enUS } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { useContext } from "react";
+import { AppContext } from "@/context/AppContext";
 
-type ClientStatus = 'New' | 'Active' | 'Inactive' | 'Completed' | string;
+// Mock client data
+const clients = [
+  {
+    id: 1,
+    name: "Ahmed Al-Farsi",
+    company: "TechVision Arabia",
+    industry: "Technology",
+    status: "active",
+    initialContact: new Date(2023, 3, 15),
+  },
+  {
+    id: 2,
+    name: "Sarah Johnson",
+    company: "Gulf Logistics Group",
+    industry: "Logistics",
+    status: "active",
+    initialContact: new Date(2023, 5, 22),
+  },
+  {
+    id: 3,
+    name: "Mohammed Al-Qahtani",
+    company: "Sands Investment Group",
+    industry: "Finance",
+    status: "completed",
+    initialContact: new Date(2023, 1, 8),
+  },
+  {
+    id: 4,
+    name: "Fatima Al-Suwaidi",
+    company: "Emirates Healthcare",
+    industry: "Healthcare",
+    status: "inactive",
+    initialContact: new Date(2023, 7, 3),
+  },
+  {
+    id: 5,
+    name: "John Smith",
+    company: "Global Retail Solutions",
+    industry: "Retail",
+    status: "new",
+    initialContact: new Date(2023, 10, 1),
+  },
+];
 
-const statusColors: Record<ClientStatus, string> = {
-  'New': 'bg-blue-500',
-  'Active': 'bg-green-500',
-  'Inactive': 'bg-amber-500',
-  'Completed': 'bg-purple-500',
-  'default': 'bg-slate-500'
-};
+// Analytics data
+const statusData = [
+  { name: "Active", value: 35, color: "#4E89AE" },
+  { name: "Completed", value: 20, color: "#43A047" },
+  { name: "New", value: 15, color: "#F59E0B" },
+  { name: "Inactive", value: 10, color: "#787878" },
+];
 
-const ClientsOverview: React.FC = () => {
+const industryData = [
+  { name: "Technology", value: 25, color: "#4E89AE" },
+  { name: "Finance", value: 20, color: "#43658B" },
+  { name: "Healthcare", value: 18, color: "#ed6a5e" },
+  { name: "Retail", value: 15, color: "#f4a261" },
+  { name: "Logistics", value: 12, color: "#2a9d8f" },
+  { name: "Other", value: 10, color: "#787878" },
+];
+
+const ClientsOverview = () => {
+  const [, setLocation] = useLocation();
   const { language } = useContext(AppContext);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [industryFilter, setIndustryFilter] = useState("all");
+  
   const isRtl = language === 'ar';
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [industryFilter, setIndustryFilter] = useState<string>('all');
-  const dateLocale = language === 'ar' ? ar : enUS;
-
-  const { data: clients, isLoading, error } = useQuery<Client[]>({
-    queryKey: ['/api/clients'],
-  });
-
+  
   // Filter clients based on search and filters
-  const filteredClients = clients?.filter(client => {
+  const filteredClients = clients.filter((client) => {
     const matchesSearch = 
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
-    const matchesIndustry = industryFilter === 'all' || client.industry === industryFilter;
+      client.name.toLowerCase().includes(search.toLowerCase()) ||
+      client.company.toLowerCase().includes(search.toLowerCase()) ||
+      client.industry.toLowerCase().includes(search.toLowerCase());
+      
+    const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+    const matchesIndustry = industryFilter === "all" || client.industry === industryFilter;
     
     return matchesSearch && matchesStatus && matchesIndustry;
   });
-
-  // Extract unique industries for filter
-  const industries = clients 
-    ? Array.from(new Set(clients.filter(c => c.industry).map(c => c.industry))) 
-    : [];
-
-  // Count clients by status
-  const statusCounts = clients?.reduce((counts: Record<string, number>, client) => {
-    const status = client.status || 'Unknown';
-    counts[status] = (counts[status] || 0) + 1;
-    return counts;
-  }, {});
-
-  // Count clients by industry
-  const industryCounts = clients?.reduce((counts: Record<string, number>, client) => {
-    const industry = client.industry || 'Unknown';
-    counts[industry] = (counts[industry] || 0) + 1;
-    return counts;
-  }, {});
-
-  const formatClientDate = (date: Date) => {
-    return format(new Date(date), 'PP', { locale: dateLocale });
+  
+  // Get unique industries for filter
+  const uniqueIndustries = new Set<string>();
+  clients.forEach(client => uniqueIndustries.add(client.industry));
+  const industries = Array.from(uniqueIndustries);
+  
+  // Status badge variant based on status
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge variant="default">{language === 'ar' ? 'نشط' : 'Active'}</Badge>;
+      case "completed":
+        return <Badge className="bg-green-500">{language === 'ar' ? 'مكتمل' : 'Completed'}</Badge>;
+      case "inactive":
+        return <Badge variant="outline">{language === 'ar' ? 'غير نشط' : 'Inactive'}</Badge>;
+      case "new":
+        return <Badge className="bg-yellow-500">{language === 'ar' ? 'جديد' : 'New'}</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
-
-  // Stats cards
-  const Stats = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {language === 'ar' ? 'إجمالي العملاء' : 'Total Clients'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-            <div className="text-2xl font-bold">{clients?.length || 0}</div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {language === 'ar' ? 'العملاء النشطون' : 'Active Clients'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <ArrowUpRight className="mr-2 h-4 w-4 text-muted-foreground" />
-            <div className="text-2xl font-bold">{statusCounts?.['Active'] || 0}</div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {language === 'ar' ? 'الصناعات' : 'Industries'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <Building className="mr-2 h-4 w-4 text-muted-foreground" />
-            <div className="text-2xl font-bold">{industries.length || 0}</div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {language === 'ar' ? 'عملاء جدد (هذا الشهر)' : 'New This Month'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-            <div className="text-2xl font-bold">
-              {clients?.filter(c => {
-                const now = new Date();
-                const clientDate = new Date(c.initialContactDate);
-                return clientDate.getMonth() === now.getMonth() && 
-                       clientDate.getFullYear() === now.getFullYear();
-              }).length || 0}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
+  
+  // Navigate to client journey
+  const viewJourney = (clientId: number) => {
+    setLocation(`/admin/clients/${clientId}`);
+  };
+  
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">
-            {language === 'ar' ? 'العملاء' : 'Clients'}
-          </h1>
-          <p className="text-muted-foreground">
-            {language === 'ar' 
-              ? 'إدارة ومراقبة جميع العملاء ورحلاتهم' 
-              : 'Manage and monitor all clients and their journeys'}
-          </p>
-        </div>
-        <Button className="mt-4 sm:mt-0" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          {language === 'ar' ? 'إضافة عميل جديد' : 'Add New Client'}
-        </Button>
+    <div className={`space-y-6 ${isRtl ? 'rtl' : 'ltr'}`}>
+      {/* Overview cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {language === 'ar' ? 'إجمالي العملاء' : 'Total Clients'}
+                </p>
+                <p className="text-2xl font-bold">{clients.length}</p>
+              </div>
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {language === 'ar' ? 'العملاء النشطون' : 'Active Clients'}
+                </p>
+                <p className="text-2xl font-bold">
+                  {clients.filter((client) => client.status === "active").length}
+                </p>
+              </div>
+              <div className="bg-primary/10 p-2 rounded-full">
+                <UserCheck className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {language === 'ar' ? 'الصناعات' : 'Industries'}
+                </p>
+                <p className="text-2xl font-bold">{industries.length}</p>
+              </div>
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Building className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {language === 'ar' ? 'عملاء جدد (هذا الشهر)' : 'New This Month'}
+                </p>
+                <p className="text-2xl font-bold">
+                  {clients.filter((client) => {
+                    const now = new Date();
+                    const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+                    return client.initialContact > monthAgo;
+                  }).length}
+                </p>
+              </div>
+              <div className="bg-primary/10 p-2 rounded-full">
+                <UserPlus className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      <Stats />
-
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
+      
+      {/* Client list section */}
+      <Card>
+        <CardHeader>
           <CardTitle>
             {language === 'ar' ? 'عملاء الشركة' : 'Company Clients'}
           </CardTitle>
           <CardDescription>
-            {language === 'ar' 
-              ? 'عرض وتصفية وإدارة جميع العملاء' 
-              : 'View, filter and manage all clients'}
+            {language === 'ar' ? 'عرض وتصفية وإدارة جميع العملاء' : 'View, filter and manage all clients'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className={`absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4`} />
-              <Input 
-                placeholder={language === 'ar' ? 'بحث العملاء...' : 'Search clients...'}
-                className={`${isRtl ? 'pr-10' : 'pl-10'}`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <div className="w-[150px]">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder={language === 'ar' ? 'الحالة' : 'Status'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{language === 'ar' ? 'كل الحالات' : 'All Statuses'}</SelectItem>
-                    <SelectItem value="New">{language === 'ar' ? 'جديد' : 'New'}</SelectItem>
-                    <SelectItem value="Active">{language === 'ar' ? 'نشط' : 'Active'}</SelectItem>
-                    <SelectItem value="Inactive">{language === 'ar' ? 'غير نشط' : 'Inactive'}</SelectItem>
-                    <SelectItem value="Completed">{language === 'ar' ? 'مكتمل' : 'Completed'}</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+            <div className="flex gap-2 flex-grow max-w-md">
+              <div className="relative flex-grow">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={language === 'ar' ? 'بحث العملاء...' : 'Search clients...'}
+                  className="pl-8"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
-              <div className="w-[150px]">
-                <Select value={industryFilter} onValueChange={setIndustryFilter}>
-                  <SelectTrigger>
-                    <Building className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder={language === 'ar' ? 'الصناعة' : 'Industry'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{language === 'ar' ? 'كل الصناعات' : 'All Industries'}</SelectItem>
-                    {industries.map((industry) => (
-                      <SelectItem key={industry} value={industry}>{industry}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue 
+                    placeholder={language === 'ar' ? 'كل الحالات' : 'All Statuses'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {language === 'ar' ? 'كل الحالات' : 'All Statuses'}
+                  </SelectItem>
+                  <SelectItem value="active">
+                    {language === 'ar' ? 'نشط' : 'Active'}
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    {language === 'ar' ? 'مكتمل' : 'Completed'}
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    {language === 'ar' ? 'غير نشط' : 'Inactive'}
+                  </SelectItem>
+                  <SelectItem value="new">
+                    {language === 'ar' ? 'جديد' : 'New'}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={industryFilter} onValueChange={setIndustryFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue 
+                    placeholder={language === 'ar' ? 'كل الصناعات' : 'All Industries'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {language === 'ar' ? 'كل الصناعات' : 'All Industries'}
+                  </SelectItem>
+                  {industries.map((industry) => (
+                    <SelectItem key={industry} value={industry}>
+                      {industry}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            <Button className="w-full md:w-auto">
+              <UserPlus className="mr-2 h-4 w-4" />
+              {language === 'ar' ? 'إضافة عميل جديد' : 'Add New Client'}
+            </Button>
           </div>
-
-          {isLoading ? (
-            <div className="py-10 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="mt-2 text-muted-foreground">
-                {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-              </p>
-            </div>
-          ) : error ? (
-            <div className="py-10 text-center text-red-500">
-              {language === 'ar' 
-                ? 'حدث خطأ أثناء تحميل البيانات.' 
-                : 'Error loading data.'}
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'ar' ? 'اسم العميل' : 'Client Name'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الشركة' : 'Company'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'الصناعة' : 'Industry'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'حالة العميل' : 'Status'}</TableHead>
-                      <TableHead>{language === 'ar' ? 'تاريخ التواصل الأول' : 'Initial Contact'}</TableHead>
-                      <TableHead className="text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</TableHead>
+          
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    {language === 'ar' ? 'اسم العميل' : 'Client Name'}
+                  </TableHead>
+                  <TableHead>
+                    {language === 'ar' ? 'الشركة' : 'Company'}
+                  </TableHead>
+                  <TableHead>
+                    {language === 'ar' ? 'الصناعة' : 'Industry'}
+                  </TableHead>
+                  <TableHead>
+                    {language === 'ar' ? 'الحالة' : 'Status'}
+                  </TableHead>
+                  <TableHead>
+                    {language === 'ar' ? 'تاريخ التواصل الأول' : 'Initial Contact'}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {language === 'ar' ? 'الإجراءات' : 'Actions'}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClients.length > 0 ? (
+                  filteredClients.map((client) => (
+                    <TableRow key={client.id}>
+                      <TableCell className="font-medium">{client.name}</TableCell>
+                      <TableCell>{client.company}</TableCell>
+                      <TableCell>{client.industry}</TableCell>
+                      <TableCell>{getStatusBadge(client.status)}</TableCell>
+                      <TableCell>
+                        {client.initialContact.toLocaleDateString(
+                          language === 'ar' ? 'ar-SA' : 'en-US'
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => viewJourney(client.id)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>{language === 'ar' ? 'عرض الرحلة' : 'View Journey'}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                              {language === 'ar' ? 'تحرير العميل' : 'Edit Client'}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClients?.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center h-32">
-                          <p className="text-muted-foreground mb-1">
-                            {language === 'ar' ? 'لم يتم العثور على عملاء' : 'No clients found'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {language === 'ar' 
-                              ? 'حاول تغيير المعايير أو إضافة عملاء جدد' 
-                              : 'Try changing your filters or add new clients'}
-                          </p>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredClients?.map((client) => (
-                        <TableRow key={client.id}>
-                          <TableCell>
-                            <div className="font-medium">{client.name}</div>
-                            <div className="text-xs text-muted-foreground">{client.email}</div>
-                          </TableCell>
-                          <TableCell>{client.company}</TableCell>
-                          <TableCell>{client.industry || '-'}</TableCell>
-                          <TableCell>
-                            <Badge className={`${statusColors[client.status as ClientStatus] || statusColors.default} text-white`}>
-                              {client.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatClientDate(client.initialContactDate)}</TableCell>
-                          <TableCell className="text-right">
-                            <Link href={`/admin/clients/${client.id}`}>
-                              <Button variant="ghost" size="sm">
-                                {language === 'ar' ? 'عرض الرحلة' : 'View Journey'}
-                                <ArrowUpRight className={`h-4 w-4 ${isRtl ? 'mr-2' : 'ml-2'}`} />
-                              </Button>
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground">
-                {language === 'ar' 
-                  ? `عرض ${filteredClients?.length || 0} من ${clients?.length || 0} عميل` 
-                  : `Showing ${filteredClients?.length || 0} of ${clients?.length || 0} clients`}
-              </div>
-            </>
-          )}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <p className="mb-2 text-lg font-semibold">
+                          {language === 'ar' ? 'لم يتم العثور على عملاء' : 'No clients found'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {language === 'ar' 
+                            ? 'حاول تغيير المعايير أو إضافة عملاء جدد' 
+                            : 'Try changing your filters or add new clients'}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      {/* Analytics charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
+            <CardTitle>
               {language === 'ar' ? 'العملاء حسب الحالة' : 'Clients by Status'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {statusCounts && Object.keys(statusCounts).length > 0 ? (
-              <div className="space-y-4">
-                {Object.entries(statusCounts).map(([status, count]) => (
-                  <div key={status} className="flex items-center gap-4">
-                    <Badge className={`${statusColors[status as ClientStatus] || statusColors.default} text-white w-24 justify-center`}>
-                      {status}
-                    </Badge>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div 
-                        className={`${statusColors[status as ClientStatus] || statusColors.default} h-3 rounded-full`}
-                        style={{ width: `${(count / (clients?.length || 1)) * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="w-8 text-right font-bold">{count}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-6 text-center text-muted-foreground">
-                {language === 'ar' ? 'لا توجد بيانات متاحة' : 'No data available'}
-              </div>
-            )}
+            <div className="h-[300px]">
+              {statusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد بيانات متاحة' : 'No data available'}
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Building className="h-5 w-5 mr-2" />
+            <CardTitle>
               {language === 'ar' ? 'العملاء حسب الصناعة' : 'Clients by Industry'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {industryCounts && Object.keys(industryCounts).length > 0 ? (
-              <div className="space-y-4">
-                {Object.entries(industryCounts)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([industry, count]) => (
-                    <div key={industry} className="flex items-center gap-4">
-                      <div className="w-24 truncate">{industry}</div>
-                      <div className="w-full bg-muted rounded-full h-3">
-                        <div 
-                          className="bg-primary h-3 rounded-full"
-                          style={{ width: `${(count / (clients?.length || 1)) * 100}%` }}
-                        ></div>
-                      </div>
-                      <div className="w-8 text-right font-bold">{count}</div>
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <div className="py-6 text-center text-muted-foreground">
-                {language === 'ar' ? 'لا توجد بيانات متاحة' : 'No data available'}
-              </div>
-            )}
+            <div className="h-[300px]">
+              {industryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={industryData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {industryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-muted-foreground">
+                    {language === 'ar' ? 'لا توجد بيانات متاحة' : 'No data available'}
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

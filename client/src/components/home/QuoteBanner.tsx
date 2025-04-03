@@ -15,22 +15,22 @@ export const QuoteBanner: React.FC<QuoteBannerProps> = ({ className = '' }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, delay: 0.2 }}
-      className={`w-full bg-gradient-to-r from-blue-900/80 to-indigo-900/80 text-white py-3 px-4 md:px-6 ${className}`}
+      className={`w-full bg-gradient-to-r from-blue-900/80 to-indigo-900/80 text-white py-2 px-4 md:px-6 ${className}`}
     >
       <div className="container mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="flex items-center space-x-2 mb-2 sm:mb-0">
             <div className="w-2 h-8 bg-yellow-400 rounded-full"></div>
             <p className="font-semibold text-sm md:text-base">
               {language === 'en' ? 'Inspiration' : 'إلهام'}
             </p>
           </div>
           
-          <div className="flex-1 mx-4 lg:mx-8">
+          <div className="flex-1 mx-2 lg:mx-8 text-sm">
             <QuoteDisplay 
               refreshInterval={30000} 
               showRefreshButton={false} 
-              className="bg-transparent border-none p-0 m-0" 
+              className="bg-transparent border-none p-0 m-0 text-sm" 
             />
           </div>
         </div>

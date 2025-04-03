@@ -93,7 +93,9 @@ export const InspirationSection: React.FC = () => {
               className={selectedCategory === category.value ? category.color : ""}
             >
               {category.icon}
-              <span className="ml-2">{language === 'en' ? category.label : category.labelAr}</span>
+              <span className={language === 'ar' ? 'mr-2' : 'ml-2'}>
+                {language === 'en' ? category.label : category.labelAr}
+              </span>
             </Button>
           ))}
         </div>

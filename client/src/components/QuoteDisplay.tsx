@@ -72,17 +72,17 @@ export const QuoteDisplay: React.FC<QuoteDisplayProps> = ({
         transition={{ duration: 0.5 }}
         className="mb-4"
       >
-        <p className="text-lg md:text-xl font-serif italic text-foreground">
-          "{language === 'en' ? quote.text : quote.textAr}"
+        <p className={`text-lg md:text-xl font-serif italic text-foreground ${className.includes('text-sm') ? 'text-sm md:text-base' : ''}`}>
+          {language === 'en' ? `"${quote.text}"` : `"${quote.textAr}"`}
         </p>
-        <footer className="mt-2 text-sm text-muted-foreground">
-          — <cite>{language === 'en' ? quote.author : quote.authorAr}</cite>
+        <footer className={`mt-2 text-sm text-muted-foreground ${className.includes('text-sm') ? 'text-xs' : ''}`}>
+          {language === 'en' ? `— ${quote.author}` : `— ${quote.authorAr}`}
         </footer>
       </motion.blockquote>
       
       {showRefreshButton && (
         <motion.div 
-          className="absolute bottom-4 right-4"
+          className={`absolute bottom-4 ${language === 'ar' ? 'left-4' : 'right-4'}`}
           animate={{ rotate: isRefreshing ? 360 : 0 }}
           transition={{ duration: 0.5 }}
         >

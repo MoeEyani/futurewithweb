@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'wouter';
+import React, { useState, useEffect, useContext } from 'react';
 import { Menu, X } from 'lucide-react';
 import LanguageToggle from '../ui/language-toggle';
-import { useContext } from 'react';
 import { AppContext } from '@/context/AppContext';
 import Logo from '../Logo';
 
@@ -35,43 +33,47 @@ const Navbar: React.FC = () => {
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/">
-            <a className="flex items-center">
-              <Logo withText={true} />
-            </a>
-          </Link>
+          <div className="cursor-pointer" onClick={() => window.location.href = '/'}>
+            <Logo withText={true} />
+          </div>
           
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/">
-              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'HOME' : 'الرئيسية'}
-              </a>
-            </Link>
-            <Link href="/#services">
-              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'SERVICES' : 'الخدمات'}
-              </a>
-            </Link>
-            <Link href="/#workflow">
-              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'OUR APPROACH' : 'منهجنا'}
-              </a>
-            </Link>
-            <Link href="/#inspiration">
-              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'INSPIRATION' : 'إلهام'}
-              </a>
-            </Link>
-            <Link href="/#testimonials">
-              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'SUCCESS STORIES' : 'قصص النجاح'}
-              </a>
-            </Link>
-            <Link href="/#contact">
-              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'CONTACT' : 'اتصل بنا'}
-              </a>
-            </Link>
+            <div 
+              className="text-white font-space text-sm hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/'; }}
+            >
+              {language === 'en' ? 'HOME' : 'الرئيسية'}
+            </div>
+            <div 
+              className="text-white font-space text-sm hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#services'; }}
+            >
+              {language === 'en' ? 'SERVICES' : 'الخدمات'}
+            </div>
+            <div 
+              className="text-white font-space text-sm hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#workflow'; }}
+            >
+              {language === 'en' ? 'OUR APPROACH' : 'منهجنا'}
+            </div>
+            <div 
+              className="text-white font-space text-sm hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#inspiration'; }}
+            >
+              {language === 'en' ? 'INSPIRATION' : 'إلهام'}
+            </div>
+            <div 
+              className="text-white font-space text-sm hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#testimonials'; }}
+            >
+              {language === 'en' ? 'SUCCESS STORIES' : 'قصص النجاح'}
+            </div>
+            <div 
+              className="text-white font-space text-sm hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#contact'; }}
+            >
+              {language === 'en' ? 'CONTACT' : 'اتصل بنا'}
+            </div>
           </nav>
           
           <div className="flex items-center space-x-4">
@@ -92,36 +94,42 @@ const Navbar: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-gray-900 bg-opacity-95 py-4">
           <div className="container mx-auto px-4 flex flex-col space-y-4">
-            <Link href="/">
-              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'HOME' : 'الرئيسية'}
-              </a>
-            </Link>
-            <Link href="/#services">
-              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'SERVICES' : 'الخدمات'}
-              </a>
-            </Link>
-            <Link href="/#workflow">
-              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'OUR APPROACH' : 'منهجنا'}
-              </a>
-            </Link>
-            <Link href="/#inspiration">
-              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'INSPIRATION' : 'إلهام'}
-              </a>
-            </Link>
-            <Link href="/#testimonials">
-              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'SUCCESS STORIES' : 'قصص النجاح'}
-              </a>
-            </Link>
-            <Link href="/#contact">
-              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
-                {language === 'en' ? 'CONTACT' : 'اتصل بنا'}
-              </a>
-            </Link>
+            <div 
+              className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/'; }}
+            >
+              {language === 'en' ? 'HOME' : 'الرئيسية'}
+            </div>
+            <div 
+              className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#services'; }}
+            >
+              {language === 'en' ? 'SERVICES' : 'الخدمات'}
+            </div>
+            <div 
+              className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#workflow'; }}
+            >
+              {language === 'en' ? 'OUR APPROACH' : 'منهجنا'}
+            </div>
+            <div 
+              className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#inspiration'; }}
+            >
+              {language === 'en' ? 'INSPIRATION' : 'إلهام'}
+            </div>
+            <div 
+              className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#testimonials'; }}
+            >
+              {language === 'en' ? 'SUCCESS STORIES' : 'قصص النجاح'}
+            </div>
+            <div 
+              className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors cursor-pointer" 
+              onClick={() => { handleNavClick(); window.location.href = '/#contact'; }}
+            >
+              {language === 'en' ? 'CONTACT' : 'اتصل بنا'}
+            </div>
           </div>
         </div>
       )}

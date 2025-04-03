@@ -9,14 +9,14 @@ export async function initializeMailService() {
   try {
     // If we're in production and have credentials, use real SMTP
     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD && process.env.NODE_ENV === 'production') {
-      // Create reusable transporter object using SMTP settings
+      // Create reusable transporter object using SMTP settings for SpaceMail
       transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',   // Default to Gmail
-        port: parseInt(process.env.EMAIL_PORT || '587'),    // Default SMTP port
-        secure: process.env.EMAIL_SECURE === 'true',        // true for 465, false for other ports
+        host: process.env.EMAIL_HOST || 'mail.spacemail.com',   // Use SpaceMail server
+        port: parseInt(process.env.EMAIL_PORT || '587'),        // Default SMTP port
+        secure: process.env.EMAIL_SECURE === 'true',            // true for 465, false for other ports
         auth: {
-          user: process.env.EMAIL_USER,                     // Your email address 
-          pass: process.env.EMAIL_PASSWORD,                 // Your email password
+          user: process.env.EMAIL_USER,                         // Your email address 
+          pass: process.env.EMAIL_PASSWORD,                     // Your email password
         }
       });
       

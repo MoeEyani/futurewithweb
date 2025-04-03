@@ -3,7 +3,7 @@ import { AppContext } from '@/context/AppContext';
 import { Phone, Mail, MapPin, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const contactFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -248,10 +250,22 @@ const ContactSection: React.FC = () => {
                           {language === 'en' ? 'Phone (optional)' : 'الهاتف (اختياري)'}
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder={language === 'en' ? 'Enter your phone number' : 'أدخل رقم هاتفك'} 
-                            type="tel"
-                            {...field} 
+                          <Controller
+                            name="phone"
+                            control={form.control}
+                            render={({ field: { onChange, value } }) => (
+                              <PhoneInput
+                                country={'ye'} // Yemen as default
+                                value={value}
+                                onChange={onChange}
+                                inputClass="!w-full !bg-background !border-input !text-foreground !h-10 !pl-[3.5rem] !rounded-md"
+                                containerClass="!w-full"
+                                dropdownClass="!bg-background !text-foreground"
+                                buttonClass="!bg-background !border-input !rounded-l-md"
+                                buttonStyle={{ borderRight: 0 }}
+                                placeholder={language === 'en' ? 'Enter your phone number' : 'أدخل رقم هاتفك'}
+                              />
+                            )}
                           />
                         </FormControl>
                         <FormMessage />

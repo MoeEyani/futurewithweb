@@ -61,3 +61,32 @@
 .service-card:hover .service-card-inner {
   transform: rotateY(180deg);
 }
+
+/* Phone Input Customization */
+.react-tel-input .form-control {
+  width: 100% !important;
+  background-color: transparent !important;
+  color: #F8F9FA !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.react-tel-input .selected-flag {
+  background-color: transparent !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.react-tel-input .country-list {
+  background-color: #1a1a1a !important;
+  color: #F8F9FA !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.react-tel-input .country-list .country.highlight,
+.react-tel-input .country-list .country:hover {
+  background-color: #4E89AE !important;
+}
+
+.react-tel-input .country-list .country-name,
+.react-tel-input .country-list .dial-code {
+  color: #F8F9FA !important;
+}

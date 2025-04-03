@@ -13,6 +13,7 @@ const ThresholdGate: React.FC = () => {
   useEffect(() => {
     // Force navigation if already set to navigate
     if (navigating) {
+      console.log('Will navigate in 2 seconds...');
       const timer = setTimeout(() => {
         enterSite();
       }, 2000);
@@ -44,20 +45,22 @@ const ThresholdGate: React.FC = () => {
     // Save choice for 24 hours
     localStorage.setItem('gatewayChoice', 'entered');
     localStorage.setItem('gatewayTimestamp', Date.now().toString());
-    console.log('Navigating to main site...');
+    console.log('Entering main site now...');
     
-    // Force redirect to home page
+    // Just set the state to trigger the main App effect
+    setShowGateway(false);
+    
+    // As a last resort, force page reload after a delay
     setTimeout(() => {
-      setShowGateway(false);
-      // Force a hard refresh of the page if all else fails
-      if (window.location.pathname === '/') {
-        window.location.href = window.location.origin + '/?refresh=' + Date.now();
+      if (document.getElementById('threshold-gate')) {
+        console.log('Gateway still visible, forcing page reload');
+        window.location.href = window.location.origin + '/?t=' + Date.now();
       }
-    }, 500);
+    }, 1000);
   };
 
   return (
-    <div className="gate-container min-h-screen w-full relative overflow-hidden">
+    <div id="threshold-gate" className="gate-container min-h-screen w-full relative overflow-hidden">
       {/* Business-themed background */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-indigo-900 to-purple-900">
         <div className="absolute inset-0 opacity-20" 

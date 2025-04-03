@@ -57,6 +57,11 @@ const Navbar: React.FC = () => {
                 {language === 'en' ? 'OUR APPROACH' : 'منهجنا'}
               </a>
             </Link>
+            <Link href="/#inspiration">
+              <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
+                {language === 'en' ? 'INSPIRATION' : 'إلهام'}
+              </a>
+            </Link>
             <Link href="/#testimonials">
               <a className="text-white font-space text-sm hover:text-blue-400 transition-colors" onClick={handleNavClick}>
                 {language === 'en' ? 'SUCCESS STORIES' : 'قصص النجاح'}
@@ -100,6 +105,11 @@ const Navbar: React.FC = () => {
             <Link href="/#workflow">
               <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
                 {language === 'en' ? 'OUR APPROACH' : 'منهجنا'}
+              </a>
+            </Link>
+            <Link href="/#inspiration">
+              <a className="text-white font-space text-base py-2 hover:text-blue-400 transition-colors" onClick={handleNavClick}>
+                {language === 'en' ? 'INSPIRATION' : 'إلهام'}
               </a>
             </Link>
             <Link href="/#testimonials">

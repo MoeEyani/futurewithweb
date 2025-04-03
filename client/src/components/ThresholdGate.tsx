@@ -10,6 +10,17 @@ const ThresholdGate: React.FC = () => {
   const [showGuestButton, setShowGuestButton] = useState(false);
   const [navigating, setNavigating] = useState(false);
 
+  // Skip straight to home page if we've got a valid session
+  useEffect(() => {
+    const gatewayChoice = localStorage.getItem('gatewayChoice');
+    const gatewayTimestamp = localStorage.getItem('gatewayTimestamp');
+    
+    if (gatewayChoice === 'entered' && gatewayTimestamp && 
+        (Date.now() - parseInt(gatewayTimestamp)) < 86400000) {
+      setShowGateway(false);
+    }
+  }, [setShowGateway]);
+  
   useEffect(() => {
     // Force navigation if already set to navigate
     if (navigating) {
@@ -47,16 +58,8 @@ const ThresholdGate: React.FC = () => {
     localStorage.setItem('gatewayTimestamp', Date.now().toString());
     console.log('Entering main site now...');
     
-    // Just set the state to trigger the main App effect
+    // Simply set showGateway to false to transition to home page
     setShowGateway(false);
-    
-    // As a last resort, force page reload after a delay
-    setTimeout(() => {
-      if (document.getElementById('threshold-gate')) {
-        console.log('Gateway still visible, forcing page reload');
-        window.location.href = window.location.origin + '/?t=' + Date.now();
-      }
-    }, 1000);
   };
 
   return (

@@ -1,7 +1,5 @@
-import React from 'react';
-import { Link } from 'wouter';
+import React, { useContext } from 'react';
 import Logo from '../Logo';
-import { useContext } from 'react';
 import { AppContext } from '@/context/AppContext';
 import { Facebook, Twitter, Linkedin, ArrowRight } from 'lucide-react';
 
@@ -13,11 +11,9 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div>
-            <Link href="/">
-              <a className="inline-block mb-6">
-                <Logo withText={true} />
-              </a>
-            </Link>
+            <div className="inline-block mb-6">
+              <Logo withText={true} />
+            </div>
             <p className="text-gray-300">
               {language === 'en' 
                 ? 'We analyze, diagnose, and solve your deepest business challenges.'

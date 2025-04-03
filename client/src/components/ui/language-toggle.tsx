@@ -11,13 +11,14 @@ const LanguageToggle: React.FC<LanguageToggleProps> = ({ className = '' }) => {
   const { language, setLanguage } = useContext(AppContext);
 
   const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'ar' : 'en');
-    document.documentElement.dir = language === 'en' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language === 'en' ? 'ar' : 'en';
+    const newLanguage = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLanguage);
+    document.documentElement.dir = newLanguage === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = newLanguage;
   };
 
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={`flex items-center ${language === 'ar' ? 'space-x-2 space-x-reverse' : 'space-x-2'} ${className}`} dir="ltr">
       <span className="text-sm font-medium">EN</span>
       <Switch
         checked={language === 'ar'}

@@ -24,6 +24,12 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
       return () => clearTimeout(timer);
     }
   }, [navigating]);
+  
+  // Debug function to check localStorage and context state
+  useEffect(() => {
+    console.log('Current language:', language);
+    console.log('Navigating state:', navigating);
+  }, [language, navigating]);
 
   const handleYesClick = () => {
     const userType = 'leader';
@@ -59,9 +65,16 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
     localStorage.setItem('gatewayTimestamp', Date.now().toString());
     console.log('Entering main site now...');
     
+    // Make sure language is saved before navigating
+    localStorage.setItem('language', language);
+    
     // Call the provided callback to navigate to the home page
     const userType = localStorage.getItem('userMindset') as 'leader' | 'follower' | 'guest';
-    onEnterSite(userType || 'guest');
+    
+    // Call the provided callback with a slight delay to ensure state updates have time to propagate
+    setTimeout(() => {
+      onEnterSite(userType || 'guest');
+    }, 100);
   };
 
   return (

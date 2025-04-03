@@ -25,7 +25,18 @@ interface AppProviderProps {
 export const AppProvider = ({ children }: AppProviderProps) => {
   const [showGateway, setShowGateway] = useState(true);
   const [userType, setUserType] = useState<'leader' | 'follower' | 'guest' | null>(null);
-  const [language, setLanguage] = useState<'en' | 'ar'>('en');
+  
+  // Initialize language from localStorage or default to 'en'
+  const [language, setLanguage] = useState<'en' | 'ar'>(() => {
+    const savedLanguage = localStorage.getItem('language');
+    return (savedLanguage === 'ar' ? 'ar' : 'en') as 'en' | 'ar';
+  });
+  
+  // Persist language changes to localStorage
+  const handleSetLanguage = (lang: 'en' | 'ar') => {
+    localStorage.setItem('language', lang);
+    setLanguage(lang);
+  };
 
   return (
     <AppContext.Provider
@@ -35,7 +46,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         userType,
         setUserType,
         language,
-        setLanguage,
+        setLanguage: handleSetLanguage,
       }}
     >
       {children}

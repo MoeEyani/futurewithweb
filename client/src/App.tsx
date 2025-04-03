@@ -30,18 +30,33 @@ function App() {
     }
   }, [setShowGateway, setUserType]);
 
+  // Debug function to log the current state
+  useEffect(() => {
+    console.log('App state - showGateway:', showGateway, 'userType:', userType);
+  }, [showGateway, userType]);
+
+  const handleEnterSite = (type: 'leader' | 'follower' | 'guest') => {
+    console.log('handleEnterSite called with type:', type);
+    
+    // Set the user type first
+    setUserType(type);
+    
+    // Save gateway choice to localStorage
+    localStorage.setItem('gatewayChoice', 'entered');
+    localStorage.setItem('gatewayTimestamp', Date.now().toString());
+    localStorage.setItem('userMindset', type);
+    
+    // Use a setTimeout to ensure state updates have been processed
+    setTimeout(() => {
+      console.log('Setting showGateway to false');
+      setShowGateway(false);
+    }, 100);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       {showGateway ? (
-        <ThresholdGate onEnterSite={(type) => {
-          setUserType(type);
-          setShowGateway(false);
-          
-          // Save gateway choice to localStorage
-          localStorage.setItem('gatewayChoice', 'entered');
-          localStorage.setItem('gatewayTimestamp', Date.now().toString());
-          localStorage.setItem('userMindset', type);
-        }} />
+        <ThresholdGate onEnterSite={handleEnterSite} />
       ) : (
         <Home />
       )}

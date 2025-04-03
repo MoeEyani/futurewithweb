@@ -2,17 +2,24 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import ThresholdGate from "./components/ThresholdGate";
 import { AppContext } from "./context/AppContext";
 
 function App() {
-  const { showGateway, setShowGateway, userType, setUserType } = useContext(AppContext);
+  const { userType, setUserType, language, setLanguage } = useContext(AppContext);
+  // Use local state instead of context for the gateway visibility
+  const [showGateway, setShowGateway] = useState(true);
 
   // Check if gateway should be shown on initial load
   useEffect(() => {
-    // Force the gateway to show on initial load for now
-    setShowGateway(true);
+    console.log('App mounted - initializing...');
+    
+    // Load saved language from localStorage
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage === 'ar' || savedLanguage === 'en') {
+      setLanguage(savedLanguage);
+    }
     
     // Check if user has already made a choice in the last 24 hours
     const gatewayChoice = localStorage.getItem('gatewayChoice');
@@ -28,29 +35,28 @@ function App() {
         setUserType(savedUserType);
       }
     }
-  }, [setShowGateway, setUserType]);
+  }, [setUserType, setLanguage]);
 
   // Debug function to log the current state
   useEffect(() => {
-    console.log('App state - showGateway:', showGateway, 'userType:', userType);
-  }, [showGateway, userType]);
+    console.log('App state - showGateway:', showGateway, 'userType:', userType, 'language:', language);
+  }, [showGateway, userType, language]);
 
+  // Direct navigation function with no timeouts or state complications
   const handleEnterSite = (type: 'leader' | 'follower' | 'guest') => {
     console.log('handleEnterSite called with type:', type);
     
-    // Set the user type first
+    // Set the user type
     setUserType(type);
     
-    // Save gateway choice to localStorage
+    // Save choice for 24 hours
     localStorage.setItem('gatewayChoice', 'entered');
     localStorage.setItem('gatewayTimestamp', Date.now().toString());
     localStorage.setItem('userMindset', type);
     
-    // Use a setTimeout to ensure state updates have been processed
-    setTimeout(() => {
-      console.log('Setting showGateway to false');
-      setShowGateway(false);
-    }, 100);
+    // Directly set showGateway to false - no timeout needed with local state
+    console.log('Setting showGateway to false - navigating to home page');
+    setShowGateway(false);
   };
 
   return (

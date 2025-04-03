@@ -12,32 +12,25 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
   const { language, setLanguage } = useContext(AppContext);
   const [responseMessage, setResponseMessage] = useState<string | null>(null);
   const [showGuestButton, setShowGuestButton] = useState(false);
-  const [navigating, setNavigating] = useState(false);
-  
-  useEffect(() => {
-    // Force navigation if already set to navigate
-    if (navigating) {
-      console.log('Will navigate in 2 seconds...');
-      const timer = setTimeout(() => {
-        enterSite();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [navigating]);
   
   // Debug function to check localStorage and context state
   useEffect(() => {
-    console.log('Current language:', language);
-    console.log('Navigating state:', navigating);
-  }, [language, navigating]);
+    console.log('ThresholdGate - Current language:', language);
+  }, [language]);
 
   const handleYesClick = () => {
     const userType = 'leader';
+    // Add a response message
     setResponseMessage(language === 'en' ? 
       'Welcome, visionary. Let\'s redesign what\'s possible.' : 
       'مرحبًا أيها القائد. دعنا نعيد تصميم ما هو ممكن.');
-    localStorage.setItem('userMindset', userType);
-    setNavigating(true);
+      
+    // Directly navigate after a very short delay to show the message
+    setTimeout(() => {
+      // Navigate directly without extra state changes
+      console.log('YES clicked - Entering site as leader');
+      onEnterSite(userType);
+    }, 500);
   };
 
   const handleNoClick = () => {
@@ -51,31 +44,22 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
 
   const handleGuestClick = () => {
     const userType = 'guest';
-    localStorage.setItem('userMindset', userType);
-    setNavigating(true);
+    // Directly navigate
+    console.log('GUEST clicked - Entering site as guest');
+    onEnterSite(userType);
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'ar' : 'en');
+    const newLanguage = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLanguage);
+    localStorage.setItem('language', newLanguage);
+    console.log('Language changed to:', newLanguage);
   };
 
-  const enterSite = () => {
-    // Save choice for 24 hours
-    localStorage.setItem('gatewayChoice', 'entered');
-    localStorage.setItem('gatewayTimestamp', Date.now().toString());
-    console.log('Entering main site now...');
-    
-    // Make sure language is saved before navigating
+  // Save language to localStorage anytime it changes
+  useEffect(() => {
     localStorage.setItem('language', language);
-    
-    // Call the provided callback to navigate to the home page
-    const userType = localStorage.getItem('userMindset') as 'leader' | 'follower' | 'guest';
-    
-    // Call the provided callback with a slight delay to ensure state updates have time to propagate
-    setTimeout(() => {
-      onEnterSite(userType || 'guest');
-    }, 100);
-  };
+  }, [language]);
 
   return (
     <div id="threshold-gate" className="gate-container min-h-screen w-full relative overflow-hidden">

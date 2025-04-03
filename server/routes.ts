@@ -430,12 +430,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Unsupported endpoint'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('OpenAI proxy error:', error);
       res.status(500).json({
         success: false,
         message: 'Error processing OpenAI request',
-        error: error.message
+        error: error.message || 'Unknown error'
       });
     }
   });

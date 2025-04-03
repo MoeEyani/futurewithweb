@@ -1,12 +1,4 @@
-import OpenAI from "openai";
-
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-
-// Initialize OpenAI using environment variable
-const openai = new OpenAI({ 
-  apiKey: 'dummy-key', // We'll use backend for actual API calls
-  baseURL: '/api/openai-proxy' // Will route through backend
-});
 
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'system';
@@ -32,14 +24,24 @@ export const generateChatResponse = async (messages: ChatMessage[]): Promise<str
     });
     
     if (!response.ok) {
-      throw new Error(`API response error: ${response.status}`);
+      // If API fails, return a user-friendly message
+      console.error(`API response error: ${response.status}`);
+      return "I'm sorry, but I'm temporarily unavailable. Please try again later or contact support for assistance.";
     }
     
     const data = await response.json();
+    
+    // Check if the API response contains an error
+    if (data.success === false) {
+      console.error("OpenAI API error:", data.message || "Unknown error");
+      return "I'm sorry, but I'm temporarily unavailable. Please try again later or contact support for assistance.";
+    }
+    
     return data.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
   } catch (error) {
     console.error("Error generating chat response:", error);
-    throw new Error("Failed to get response from AI assistant. Please try again later.");
+    // Return a graceful fallback instead of throwing an error
+    return "I'm sorry, but I'm temporarily unavailable. Please try again later or contact support for assistance.";
   }
 };
 
@@ -76,10 +78,27 @@ export const analyzeBusinessNeeds = async (businessDescription: string): Promise
     });
     
     if (!response.ok) {
-      throw new Error(`API response error: ${response.status}`);
+      // If API fails, return a fallback response that indicates the API is unavailable
+      console.error(`API response error: ${response.status}`);
+      return {
+        challenges: ["The AI analysis is temporarily unavailable."],
+        recommendations: ["Please try again later or contact support for assistance."],
+        priority: "medium",
+      };
     }
     
     const data = await response.json();
+    
+    // Check if the API response contains an error
+    if (data.success === false) {
+      console.error("OpenAI API error:", data.message || "Unknown error");
+      return {
+        challenges: ["The AI analysis is temporarily unavailable."],
+        recommendations: ["Please try again later or contact support for assistance."],
+        priority: "medium",
+      };
+    }
+    
     const result = JSON.parse(data.choices[0].message.content || '{}');
     
     return {
@@ -89,7 +108,12 @@ export const analyzeBusinessNeeds = async (businessDescription: string): Promise
     };
   } catch (error) {
     console.error("Error analyzing business needs:", error);
-    throw new Error("Failed to analyze business needs. Please try again later.");
+    // Return a graceful fallback instead of throwing an error
+    return {
+      challenges: ["The AI analysis is temporarily unavailable."],
+      recommendations: ["Please try again later or contact support for assistance."],
+      priority: "medium",
+    };
   }
 };
 
@@ -132,10 +156,31 @@ export const generateCaseStudy = async (
     });
     
     if (!response.ok) {
-      throw new Error(`API response error: ${response.status}`);
+      // If API fails, return a fallback response that indicates the API is unavailable
+      console.error(`API response error: ${response.status}`);
+      return {
+        title: "Case Study Generation Temporarily Unavailable",
+        summary: "Our AI-powered case study generator is currently unavailable. Please try again later or contact support for assistance.",
+        approach: ["Service currently unavailable"],
+        outcomes: ["Service currently unavailable"],
+        testimonial: "",
+      };
     }
     
     const data = await response.json();
+    
+    // Check if the API response contains an error
+    if (data.success === false) {
+      console.error("OpenAI API error:", data.message || "Unknown error");
+      return {
+        title: "Case Study Generation Temporarily Unavailable",
+        summary: "Our AI-powered case study generator is currently unavailable. Please try again later or contact support for assistance.",
+        approach: ["Service currently unavailable"],
+        outcomes: ["Service currently unavailable"],
+        testimonial: "",
+      };
+    }
+    
     const result = JSON.parse(data.choices[0].message.content || '{}');
     
     return {
@@ -147,6 +192,13 @@ export const generateCaseStudy = async (
     };
   } catch (error) {
     console.error("Error generating case study:", error);
-    throw new Error("Failed to generate case study. Please try again later.");
+    // Return a graceful fallback instead of throwing an error
+    return {
+      title: "Case Study Generation Temporarily Unavailable",
+      summary: "Our AI-powered case study generator is currently unavailable. Please try again later or contact support for assistance.",
+      approach: ["Service currently unavailable"],
+      outcomes: ["Service currently unavailable"],
+      testimonial: "",
+    };
   }
 };

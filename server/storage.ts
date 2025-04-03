@@ -51,22 +51,49 @@ export interface IStorage {
   getAnalyticsEvents(filters?: { clientId?: number, eventType?: string, startDate?: Date, endDate?: Date }): Promise<AnalyticsEvent[]>;
 }
 
-import { db } from "./db";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+export class MemStorage implements IStorage {
+  private users: Map<number, User>;
+  private contactSubmissions: Map<number, ContactSubmission>;
+  private quizResults: Map<number, QuizResult>;
+  private clients: Map<number, Client>;
+  private clientInteractions: Map<number, ClientInteraction>;
+  private journeyStages: Map<number, JourneyStage>;
+  private journeyProgress: Map<number, JourneyProgress>;
+  private analyticsEvents: Map<number, AnalyticsEvent>;
+  
+  private userCurrentId: number;
+  private contactSubmissionCurrentId: number;
+  private quizResultCurrentId: number;
+  private clientCurrentId: number;
+  private clientInteractionCurrentId: number;
+  private journeyStageCurrentId: number;
+  private journeyProgressCurrentId: number;
+  private analyticsEventCurrentId: number;
 
-export class DatabaseStorage implements IStorage {
   constructor() {
-    // Initialize with default journey stages if needed
+    this.users = new Map();
+    this.contactSubmissions = new Map();
+    this.quizResults = new Map();
+    this.clients = new Map();
+    this.clientInteractions = new Map();
+    this.journeyStages = new Map();
+    this.journeyProgress = new Map();
+    this.analyticsEvents = new Map();
+    
+    this.userCurrentId = 1;
+    this.contactSubmissionCurrentId = 1;
+    this.quizResultCurrentId = 1;
+    this.clientCurrentId = 1;
+    this.clientInteractionCurrentId = 1;
+    this.journeyStageCurrentId = 1;
+    this.journeyProgressCurrentId = 1;
+    this.analyticsEventCurrentId = 1;
+    
+    // Initialize with default journey stages
     this.initDefaultJourneyStages();
   }
   
   private async initDefaultJourneyStages() {
-    // Check if journey stages already exist
-    const existingStages = await db.select().from(journeyStages);
-    if (existingStages.length > 0) {
-      return; // Stages already exist
-    }
-    
     const defaultStages = [
       { name: 'Initial Contact', description: 'First interaction with the client', order: 1, color: '#4E89AE', isActive: true },
       { name: 'Needs Assessment', description: 'Evaluating client requirements', order: 2, color: '#43658B', isActive: true },
@@ -84,230 +111,250 @@ export class DatabaseStorage implements IStorage {
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    return this.users.get(id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username,
+    );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const id = this.userCurrentId++;
+    const user: User = { ...insertUser, id };
+    this.users.set(id, user);
     return user;
   }
   
   // Contact submission methods
   async createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission> {
-    const [contactSubmission] = await db
-      .insert(contactSubmissions)
-      .values({
-        ...submission,
-        submittedAt: new Date()
-      })
-      .returning();
+    const id = this.contactSubmissionCurrentId++;
+    const contactSubmission: ContactSubmission = { 
+      ...submission, 
+      id, 
+      submittedAt: new Date() 
+    };
+    this.contactSubmissions.set(id, contactSubmission);
     return contactSubmission;
   }
   
   async getContactSubmissions(): Promise<ContactSubmission[]> {
-    return await db.select().from(contactSubmissions);
+    return Array.from(this.contactSubmissions.values());
   }
   
   // Quiz result methods
   async createQuizResult(result: InsertQuizResult): Promise<QuizResult> {
-    const [quizResult] = await db
-      .insert(quizResults)
-      .values({
-        ...result,
-        submittedAt: new Date()
-      })
-      .returning();
+    const id = this.quizResultCurrentId++;
+    const quizResult: QuizResult = { 
+      ...result, 
+      id, 
+      email: result.email || null,
+      submittedAt: new Date() 
+    };
+    this.quizResults.set(id, quizResult);
     return quizResult;
   }
   
   async getQuizResults(): Promise<QuizResult[]> {
-    return await db.select().from(quizResults);
+    return Array.from(this.quizResults.values());
   }
   
   // Client management methods
   async createClient(client: InsertClient): Promise<Client> {
+    const id = this.clientCurrentId++;
     const now = new Date();
-    const [newClient] = await db
-      .insert(clients)
-      .values({
-        ...client,
-        status: client.status || 'new',
-        initialContactDate: now,
-        lastContactDate: now
-      })
-      .returning();
+    const newClient: Client = {
+      id,
+      name: client.name,
+      email: client.email,
+      company: client.company,
+      status: client.status || 'New',
+      phone: client.phone || null,
+      industry: client.industry || null,
+      size: client.size || null,
+      source: client.source || null,
+      notes: client.notes || null,
+      initialContactDate: now,
+      lastContactDate: now,
+      metaData: client.metaData || null
+    };
+    this.clients.set(id, newClient);
     return newClient;
   }
   
   async getClient(id: number): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(eq(clients.id, id));
-    return client || undefined;
+    return this.clients.get(id);
   }
   
   async getClientByEmail(email: string): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(eq(clients.email, email));
-    return client || undefined;
+    return Array.from(this.clients.values()).find(
+      (client) => client.email === email
+    );
   }
   
   async getClients(): Promise<Client[]> {
-    return await db.select().from(clients);
+    return Array.from(this.clients.values());
   }
   
   async updateClient(id: number, clientUpdate: Partial<InsertClient>): Promise<Client | undefined> {
-    const [updatedClient] = await db
-      .update(clients)
-      .set({
-        ...clientUpdate,
-        lastContactDate: new Date()
-      })
-      .where(eq(clients.id, id))
-      .returning();
-    return updatedClient || undefined;
+    const client = this.clients.get(id);
+    if (!client) return undefined;
+    
+    const updatedClient: Client = {
+      ...client,
+      ...clientUpdate,
+      id,
+      lastContactDate: new Date()
+    };
+    
+    this.clients.set(id, updatedClient);
+    return updatedClient;
   }
   
   // Client interactions methods
   async createClientInteraction(interaction: InsertClientInteraction): Promise<ClientInteraction> {
-    const [newInteraction] = await db
-      .insert(clientInteractions)
-      .values({
-        ...interaction,
-        date: new Date()
-      })
-      .returning();
+    const id = this.clientInteractionCurrentId++;
+    const newInteraction: ClientInteraction = {
+      id,
+      type: interaction.type,
+      clientId: interaction.clientId,
+      description: interaction.description,
+      outcome: interaction.outcome || null,
+      nextSteps: interaction.nextSteps || null,
+      date: new Date(),
+      metaData: interaction.metaData || null
+    };
+    this.clientInteractions.set(id, newInteraction);
     
     // Update the client's last contact date
-    await db
-      .update(clients)
-      .set({ lastContactDate: new Date() })
-      .where(eq(clients.id, interaction.clientId));
+    const client = this.clients.get(interaction.clientId);
+    if (client) {
+      client.lastContactDate = new Date(); // Direct update instead of using updateClient
+      this.clients.set(client.id, client);
+    }
     
     return newInteraction;
   }
   
   async getClientInteractions(clientId: number): Promise<ClientInteraction[]> {
-    return await db
-      .select()
-      .from(clientInteractions)
-      .where(eq(clientInteractions.clientId, clientId));
+    return Array.from(this.clientInteractions.values())
+      .filter(interaction => interaction.clientId === clientId);
   }
   
   async getInteraction(id: number): Promise<ClientInteraction | undefined> {
-    const [interaction] = await db
-      .select()
-      .from(clientInteractions)
-      .where(eq(clientInteractions.id, id));
-    return interaction || undefined;
+    return this.clientInteractions.get(id);
   }
   
   // Journey stages methods
   async createJourneyStage(stage: InsertJourneyStage): Promise<JourneyStage> {
-    const [newStage] = await db
-      .insert(journeyStages)
-      .values({
-        name: stage.name,
-        description: stage.description || null,
-        order: stage.order,
-        color: stage.color || '#4E89AE',
-        isActive: stage.isActive !== undefined ? stage.isActive : true
-      })
-      .returning();
+    const id = this.journeyStageCurrentId++;
+    const newStage: JourneyStage = {
+      id,
+      name: stage.name,
+      description: stage.description || null,
+      order: stage.order,
+      color: stage.color || '#4E89AE',
+      isActive: stage.isActive !== undefined ? stage.isActive : true
+    };
+    this.journeyStages.set(id, newStage);
     return newStage;
   }
   
   async getJourneyStage(id: number): Promise<JourneyStage | undefined> {
-    const [stage] = await db
-      .select()
-      .from(journeyStages)
-      .where(eq(journeyStages.id, id));
-    return stage || undefined;
+    return this.journeyStages.get(id);
   }
   
   async getJourneyStages(): Promise<JourneyStage[]> {
-    return await db
-      .select()
-      .from(journeyStages)
-      .orderBy(journeyStages.order);
+    return Array.from(this.journeyStages.values())
+      .sort((a, b) => a.order - b.order);
   }
   
   async updateJourneyStage(id: number, stageUpdate: Partial<InsertJourneyStage>): Promise<JourneyStage | undefined> {
-    const [updatedStage] = await db
-      .update(journeyStages)
-      .set(stageUpdate)
-      .where(eq(journeyStages.id, id))
-      .returning();
-    return updatedStage || undefined;
+    const stage = this.journeyStages.get(id);
+    if (!stage) return undefined;
+    
+    const updatedStage: JourneyStage = {
+      ...stage,
+      ...stageUpdate,
+      id
+    };
+    
+    this.journeyStages.set(id, updatedStage);
+    return updatedStage;
   }
   
   // Journey progress methods
   async createJourneyProgress(progress: InsertJourneyProgress): Promise<JourneyProgress> {
-    const [newProgress] = await db
-      .insert(journeyProgress)
-      .values({
-        ...progress,
-        startDate: progress.startDate || new Date(),
-        isCompleted: progress.isCompleted !== undefined ? progress.isCompleted : false
-      })
-      .returning();
+    const id = this.journeyProgressCurrentId++;
+    const newProgress: JourneyProgress = {
+      id,
+      clientId: progress.clientId,
+      stageId: progress.stageId,
+      startDate: progress.startDate || new Date(),
+      completionDate: progress.completionDate || null,
+      notes: progress.notes || null,
+      isCompleted: progress.isCompleted !== undefined ? progress.isCompleted : false
+    };
+    this.journeyProgress.set(id, newProgress);
     return newProgress;
   }
   
   async getClientJourneyProgress(clientId: number): Promise<JourneyProgress[]> {
-    return await db
-      .select()
-      .from(journeyProgress)
-      .where(eq(journeyProgress.clientId, clientId));
+    return Array.from(this.journeyProgress.values())
+      .filter(progress => progress.clientId === clientId);
   }
   
   async updateJourneyProgress(id: number, progressUpdate: Partial<InsertJourneyProgress>): Promise<JourneyProgress | undefined> {
+    const progress = this.journeyProgress.get(id);
+    if (!progress) return undefined;
+    
     // If marking as completed and no completion date is provided, set it to now
     if (progressUpdate.isCompleted && !progressUpdate.completionDate) {
       progressUpdate.completionDate = new Date();
     }
     
-    const [updatedProgress] = await db
-      .update(journeyProgress)
-      .set(progressUpdate)
-      .where(eq(journeyProgress.id, id))
-      .returning();
-    return updatedProgress || undefined;
+    const updatedProgress: JourneyProgress = {
+      ...progress,
+      ...progressUpdate,
+      id
+    };
+    
+    this.journeyProgress.set(id, updatedProgress);
+    return updatedProgress;
   }
   
   // Analytics events methods
   async createAnalyticsEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent> {
-    const [newEvent] = await db
-      .insert(analyticsEvents)
-      .values({
-        ...event,
-        timestamp: new Date()
-      })
-      .returning();
+    const id = this.analyticsEventCurrentId++;
+    const newEvent: AnalyticsEvent = {
+      id,
+      clientId: event.clientId || null,
+      eventType: event.eventType,
+      timestamp: new Date(),
+      eventData: event.eventData || null,
+      pageUrl: event.pageUrl || null,
+      referrer: event.referrer || null,
+      sessionId: event.sessionId || null,
+      userAgent: event.userAgent || null,
+      ipAddress: event.ipAddress || null
+    };
+    this.analyticsEvents.set(id, newEvent);
     return newEvent;
   }
   
   async getAnalyticsEvents(filters?: { clientId?: number, eventType?: string, startDate?: Date, endDate?: Date }): Promise<AnalyticsEvent[]> {
-    let whereConditions = {};
+    let events = Array.from(this.analyticsEvents.values());
     
     if (filters) {
       if (filters.clientId !== undefined) {
-        whereConditions = { ...whereConditions, clientId: filters.clientId };
+        events = events.filter(event => event.clientId === filters.clientId);
       }
       
       if (filters.eventType !== undefined) {
-        whereConditions = { ...whereConditions, eventType: filters.eventType };
+        events = events.filter(event => event.eventType === filters.eventType);
       }
-    }
-    
-    // First get basic filtering done
-    let events = await db.select().from(analyticsEvents).where(whereConditions);
-    
-    // Then apply date filtering if needed
-    if (filters) {
+      
       if (filters.startDate !== undefined) {
         events = events.filter(event => event.timestamp >= filters.startDate!);
       }
@@ -317,9 +364,8 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    // Sort by timestamp descending
     return events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

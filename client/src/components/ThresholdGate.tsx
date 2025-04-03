@@ -3,6 +3,7 @@ import { AppContext } from '@/context/AppContext';
 import ParticleBackground from './ParticleBackground';
 import { motion } from 'framer-motion';
 import { Check, X, Languages } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ThresholdGateProps {
   onEnterSite: (userType: 'leader' | 'follower' | 'guest') => void;
@@ -49,11 +50,73 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
     onEnterSite(userType);
   };
 
+  const [isAnimating, setIsAnimating] = useState(false);
+  const { toast } = useToast();
+  
   const toggleLanguage = () => {
+    if (isAnimating) return; // Prevent multiple clicks during animation
+    
+    setIsAnimating(true);
     const newLanguage = language === 'en' ? 'ar' : 'en';
-    setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
-    console.log('Language changed to:', newLanguage);
+    const direction = newLanguage === 'ar' ? 'rtl' : 'ltr';
+    
+    // Show toast notification
+    toast({
+      title: newLanguage === 'ar' ? 'جاري تغيير اللغة...' : 'Changing language...',
+      description: newLanguage === 'ar' 
+        ? 'تحويل الواجهة إلى اللغة العربية' 
+        : 'Switching interface to English',
+      duration: 3000,
+    });
+    
+    // Get the main gate container for animations
+    const gateContainer = document.getElementById('threshold-gate');
+    
+    if (gateContainer) {
+      // Import and use the language transition animation
+      import('@/lib/animations').then(({ languageTransition }) => {
+        const timeline = languageTransition(gateContainer, direction);
+        
+        // Change the language in the middle of the animation
+        timeline.eventCallback("onUpdate", () => {
+          const progress = timeline.progress();
+          if (progress >= 0.5 && language !== newLanguage) {
+            setLanguage(newLanguage);
+            localStorage.setItem('language', newLanguage);
+            console.log('Language changed to:', newLanguage);
+          }
+        });
+        
+        // Reset animation state when complete
+        timeline.eventCallback("onComplete", () => {
+          setIsAnimating(false);
+          
+          // Show completion toast
+          toast({
+            title: newLanguage === 'ar' ? 'تم تغيير اللغة' : 'Language changed',
+            description: newLanguage === 'ar' 
+              ? 'تم تحويل الواجهة إلى اللغة العربية بنجاح' 
+              : 'Interface successfully switched to English',
+            duration: 2000,
+          });
+        });
+      });
+    } else {
+      // Fallback if container not found
+      setLanguage(newLanguage);
+      localStorage.setItem('language', newLanguage);
+      console.log('Language changed to:', newLanguage);
+      setIsAnimating(false);
+      
+      // Show fallback toast
+      toast({
+        title: newLanguage === 'ar' ? 'تم تغيير اللغة' : 'Language changed',
+        description: newLanguage === 'ar' 
+          ? 'تم تحويل الواجهة إلى اللغة العربية' 
+          : 'Interface switched to English',
+        duration: 2000,
+      });
+    }
   };
 
   // Save language to localStorage anytime it changes
@@ -92,10 +155,15 @@ const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
       {/* Language toggle button */}
       <button 
         onClick={toggleLanguage}
-        className="absolute top-5 right-5 z-20 bg-blue-600/50 hover:bg-blue-700/50 px-3 py-2 rounded-md flex items-center text-white transition-colors"
+        className={`absolute top-5 right-5 z-20 px-3 py-2 rounded-md flex items-center text-white transition-all duration-300 ${
+          isAnimating 
+            ? 'bg-blue-600/30 cursor-not-allowed' 
+            : 'bg-blue-600/50 hover:bg-blue-700/50'
+        }`}
         title={language === 'en' ? 'Switch to Arabic' : 'Switch to English'}
+        disabled={isAnimating}
       >
-        <Languages className="w-5 h-5 mr-2" />
+        <Languages className={`w-5 h-5 mr-2 ${isAnimating ? 'animate-pulse' : ''}`} />
         {language === 'en' ? 'العربية' : 'English'}
       </button>
       

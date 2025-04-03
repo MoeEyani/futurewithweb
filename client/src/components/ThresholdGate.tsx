@@ -45,7 +45,15 @@ const ThresholdGate: React.FC = () => {
     localStorage.setItem('gatewayChoice', 'entered');
     localStorage.setItem('gatewayTimestamp', Date.now().toString());
     console.log('Navigating to main site...');
-    setShowGateway(false);
+    
+    // Force redirect to home page
+    setTimeout(() => {
+      setShowGateway(false);
+      // Force a hard refresh of the page if all else fails
+      if (window.location.pathname === '/') {
+        window.location.href = window.location.origin + '/?refresh=' + Date.now();
+      }
+    }, 500);
   };
 
   return (
@@ -151,23 +159,6 @@ const ThresholdGate: React.FC = () => {
           </motion.button>
         )}
       </div>
-      
-      <motion.div 
-        initial={{ scale: 0.8, opacity: 0.5 }}
-        animate={{ 
-          scale: [0.8, 1, 0.8],
-          opacity: [0.5, 0.8, 0.5]
-        }}
-        transition={{ 
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        className="gate absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[180px] h-[180px] rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-[0_0_70px_rgba(79,70,229,0.4)] flex items-center justify-center z-10"
-      >
-        <div className="gate-inner absolute w-[150px] h-[150px] rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-60"></div>
-        <div className="gate-pulse absolute w-full h-full rounded-full border-2 border-white border-opacity-20 animate-pulse"></div>
-      </motion.div>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "./context/AppContext";
 import ThresholdGate from "./components/ThresholdGate";
 
@@ -20,6 +20,16 @@ function Router() {
 function App() {
   const { showGateway, setShowGateway } = useContext(AppContext);
   const [location] = useLocation();
+  const [forceUpdate, setForceUpdate] = useState(0);
+
+  // Force re-render when showGateway changes
+  useEffect(() => {
+    if (!showGateway) {
+      // Force a re-render after showGateway is set to false
+      setForceUpdate(prev => prev + 1);
+      console.log("Gateway closed, navigating to main content");
+    }
+  }, [showGateway]);
 
   useEffect(() => {
     // Check if user has already made a choice in the last 24 hours
@@ -33,12 +43,13 @@ function App() {
     }
   }, [setShowGateway]);
 
+  // This key forces the Router component to completely re-mount when showGateway changes
   return (
     <QueryClientProvider client={queryClient}>
       {showGateway && location === "/" ? (
-        <ThresholdGate />
+        <ThresholdGate key="threshold-gate" />
       ) : (
-        <Router />
+        <Router key={`router-${forceUpdate}`} />
       )}
       <Toaster />
     </QueryClientProvider>

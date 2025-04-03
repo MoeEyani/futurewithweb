@@ -2,24 +2,17 @@ import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '@/context/AppContext';
 import ParticleBackground from './ParticleBackground';
 import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check, X, Languages } from 'lucide-react';
 
-const ThresholdGate: React.FC = () => {
-  const { setShowGateway, setUserType } = useContext(AppContext);
+interface ThresholdGateProps {
+  onEnterSite: (userType: 'leader' | 'follower' | 'guest') => void;
+}
+
+const ThresholdGate: React.FC<ThresholdGateProps> = ({ onEnterSite }) => {
+  const { language, setLanguage } = useContext(AppContext);
   const [responseMessage, setResponseMessage] = useState<string | null>(null);
   const [showGuestButton, setShowGuestButton] = useState(false);
   const [navigating, setNavigating] = useState(false);
-
-  // Skip straight to home page if we've got a valid session
-  useEffect(() => {
-    const gatewayChoice = localStorage.getItem('gatewayChoice');
-    const gatewayTimestamp = localStorage.getItem('gatewayTimestamp');
-    
-    if (gatewayChoice === 'entered' && gatewayTimestamp && 
-        (Date.now() - parseInt(gatewayTimestamp)) < 86400000) {
-      setShowGateway(false);
-    }
-  }, [setShowGateway]);
   
   useEffect(() => {
     // Force navigation if already set to navigate
@@ -33,23 +26,31 @@ const ThresholdGate: React.FC = () => {
   }, [navigating]);
 
   const handleYesClick = () => {
-    setResponseMessage('Welcome, visionary. Let\'s redesign what\'s possible.');
-    setUserType('leader');
-    localStorage.setItem('userMindset', 'leader');
+    const userType = 'leader';
+    setResponseMessage(language === 'en' ? 
+      'Welcome, visionary. Let\'s redesign what\'s possible.' : 
+      'مرحبًا أيها القائد. دعنا نعيد تصميم ما هو ممكن.');
+    localStorage.setItem('userMindset', userType);
     setNavigating(true);
   };
 
   const handleNoClick = () => {
-    setResponseMessage('The future favors the bold. Return when you\'re ready to lead.');
+    const userType = 'follower';
+    setResponseMessage(language === 'en' ? 
+      'The future favors the bold. Return when you\'re ready to lead.' : 
+      'المستقبل يصنعه الجريئون. عد إلينا عندما تكون مستعدًا للقيادة.');
     setShowGuestButton(true);
-    setUserType('follower');
-    localStorage.setItem('userMindset', 'follower');
+    localStorage.setItem('userMindset', userType);
   };
 
   const handleGuestClick = () => {
-    setUserType('guest');
-    localStorage.setItem('userMindset', 'guest');
+    const userType = 'guest';
+    localStorage.setItem('userMindset', userType);
     setNavigating(true);
+  };
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'ar' : 'en');
   };
 
   const enterSite = () => {
@@ -58,8 +59,9 @@ const ThresholdGate: React.FC = () => {
     localStorage.setItem('gatewayTimestamp', Date.now().toString());
     console.log('Entering main site now...');
     
-    // Simply set showGateway to false to transition to home page
-    setShowGateway(false);
+    // Call the provided callback to navigate to the home page
+    const userType = localStorage.getItem('userMindset') as 'leader' | 'follower' | 'guest';
+    onEnterSite(userType || 'guest');
   };
 
   return (
@@ -90,14 +92,24 @@ const ThresholdGate: React.FC = () => {
       
       <ParticleBackground targetCenter={true} />
       
-      <div className="relative z-10 flex flex-col items-center justify-center h-screen px-6 text-center">
+      {/* Language toggle button */}
+      <button 
+        onClick={toggleLanguage}
+        className="absolute top-5 right-5 z-20 bg-blue-600/50 hover:bg-blue-700/50 px-3 py-2 rounded-md flex items-center text-white transition-colors"
+        title={language === 'en' ? 'Switch to Arabic' : 'Switch to English'}
+      >
+        <Languages className="w-5 h-5 mr-2" />
+        {language === 'en' ? 'العربية' : 'English'}
+      </button>
+      
+      <div className="relative z-10 flex flex-col items-center justify-center h-screen px-6 text-center" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.9 }}
           transition={{ duration: 1, delay: 0.5 }}
           className="mb-6 text-xl md:text-2xl font-space text-white"
         >
-          Innovation separates leaders from followers.
+          {language === 'en' ? 'Innovation separates leaders from followers.' : 'الابتكار يفرق بين القادة والأتباع.'}
         </motion.p>
         
         <motion.h1 
@@ -106,8 +118,14 @@ const ThresholdGate: React.FC = () => {
           transition={{ duration: 0.8, delay: 1.2 }}
           className="text-2xl md:text-4xl font-space font-bold mb-4 leading-tight text-white"
         >
-          Only great leaders embrace change and innovation<br className="hidden md:block"/> as part of success.
-          <br/>If you are one, step beyond this gate with us.
+          {language === 'en' ? (
+            <>Only great leaders embrace change and innovation<br className="hidden md:block"/> as part of success.
+            <br/>If you are one, step beyond this gate with us.</>
+          ) : (
+            <>فقط القادة العظماء يتبنون التغيير والابتكار
+            <br/>كجزء من النجاح.
+            <br/>إن كنت منهم، فانطلق معنا إلى ما وراء هذه البوابة.</>
+          )}
         </motion.h1>
         
         <motion.p 
@@ -116,29 +134,49 @@ const ThresholdGate: React.FC = () => {
           transition={{ duration: 0.8, delay: 1.8 }}
           className="text-sm md:text-base text-gray-300 mb-8"
         >
-          This is not a rhetorical question. Your answer determines your path.
+          {language === 'en' ? 
+            'This is not a rhetorical question. Your answer determines your path.' : 
+            'هذا ليس سؤالاً بلاغيًا. إجابتك تحدد مسارك.'}
         </motion.p>
         
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 2.2 }}
-          className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 mt-4"
+          className={`flex flex-col md:flex-row space-y-4 md:space-y-0 ${language === 'ar' ? 'md:space-x-reverse' : 'md:space-x-6'} mt-4`}
         >
           <button 
             onClick={handleYesClick}
             className="px-8 py-3 bg-green-600 text-white font-space font-bold rounded-md flex items-center justify-center hover:bg-green-700 transition-all"
           >
-            YES – I See the Future
-            <Check className="w-5 h-5 ml-2" />
+            {language === 'en' ? (
+              <>
+                YES – I See the Future
+                <Check className="w-5 h-5 ml-2" />
+              </>
+            ) : (
+              <>
+                نعم - أنا أرى المستقبل
+                <Check className="w-5 h-5 mr-2 order-first" />
+              </>
+            )}
           </button>
           
           <button 
             onClick={handleNoClick}
             className="px-8 py-3 bg-gray-600 text-white font-space font-bold rounded-md flex items-center justify-center hover:bg-gray-700 transition-all"
           >
-            NO – Not Ready Yet
-            <X className="w-5 h-5 ml-2" />
+            {language === 'en' ? (
+              <>
+                NO – Not Ready Yet
+                <X className="w-5 h-5 ml-2" />
+              </>
+            ) : (
+              <>
+                لا - لست مستعدًا بعد
+                <X className="w-5 h-5 mr-2 order-first" />
+              </>
+            )}
           </button>
         </motion.div>
         
@@ -161,7 +199,9 @@ const ThresholdGate: React.FC = () => {
             onClick={handleGuestClick}
             className="mt-6 px-6 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
           >
-            Still curious? Enter as a guest.
+            {language === 'en' ? 
+              'Still curious? Enter as a guest.' : 
+              'لا تزال فضوليًا؟ ادخل كضيف.'}
           </motion.button>
         )}
       </div>

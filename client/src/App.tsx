@@ -19,6 +19,9 @@ function App() {
     const savedLanguage = localStorage.getItem('language');
     if (savedLanguage === 'ar' || savedLanguage === 'en') {
       setLanguage(savedLanguage);
+      // Apply RTL direction for Arabic
+      document.documentElement.dir = savedLanguage === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = savedLanguage;
     }
     
     // Check if user has already made a choice in the last 24 hours
@@ -30,7 +33,7 @@ function App() {
     if (gatewayChoice === 'entered' && gatewayTimestamp && 
         (Date.now() - parseInt(gatewayTimestamp)) < 86400000) {
       // Uncomment this line when you want to enable gateway skipping:
-      // setShowGateway(false);
+      setShowGateway(false);
       if (savedUserType) {
         setUserType(savedUserType);
       }

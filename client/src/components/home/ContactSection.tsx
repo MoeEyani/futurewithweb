@@ -30,14 +30,16 @@ const ContactSection: React.FC = () => {
       icon: Phone,
       title: 'Call Us',
       titleAr: 'اتصل بنا',
-      info: '+971 4 123 4567',
+      info: '+967 730 600 011',
+      link: 'tel:+967730600011',
       color: '#4E89AE' // blue
     },
     {
       icon: Mail,
       title: 'Email Us',
       titleAr: 'راسلنا',
-      info: 'contact@futurewith.com',
+      info: 'info@futurewith.co',
+      link: 'mailto:info@futurewith.co',
       color: '#4CAF50' // green
     },
     {
@@ -45,8 +47,8 @@ const ContactSection: React.FC = () => {
       title: 'Visit Us',
       titleAr: 'زرنا',
       info: language === 'en' 
-        ? 'Dubai Media City, Building 5\nDubai, United Arab Emirates' 
-        : 'مدينة دبي للإعلام، مبنى 5\nدبي، الإمارات العربية المتحدة',
+        ? 'Sana\'a, Yemen' 
+        : 'صنعاء، اليمن',
       color: '#FFD166' // yellow
     }
   ];
@@ -64,16 +66,23 @@ const ContactSection: React.FC = () => {
   async function onSubmit(data: ContactFormValues) {
     setIsSubmitting(true);
     try {
-      // This would normally be a real API call
+      // This would normally be a real API call to the server
+      // which would then forward the message to CEO@futurewith.co
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       
+      // For development, let the user know where the email would be sent
       toast({
         title: language === 'en' ? 'Message sent successfully!' : 'تم إرسال الرسالة بنجاح!',
         description: language === 'en' 
-          ? 'We will get back to you soon.' 
-          : 'سنتواصل معك قريباً.',
+          ? 'Your inquiry has been forwarded to CEO@futurewith.co' 
+          : 'تم إرسال استفسارك إلى CEO@futurewith.co',
         variant: 'default',
       });
+      
+      // Open email client as a fallback for development environment
+      const subject = encodeURIComponent(`Inquiry from ${data.name} at ${data.company}`);
+      const body = encodeURIComponent(`Name: ${data.name}\nCompany: ${data.company}\nEmail: ${data.email}\n\n${data.message}`);
+      window.open(`mailto:CEO@futurewith.co?subject=${subject}&body=${body}`);
       
       form.reset();
     } catch (error) {
@@ -129,7 +138,16 @@ const ContactSection: React.FC = () => {
                     <h3 className="text-xl font-space font-bold mb-1">
                       {language === 'en' ? item.title : item.titleAr}
                     </h3>
-                    <p className="text-gray-300 whitespace-pre-line">{item.info}</p>
+                    {item.link ? (
+                      <a 
+                        href={item.link} 
+                        className="text-gray-300 hover:text-primary transition-colors whitespace-pre-line"
+                      >
+                        {item.info}
+                      </a>
+                    ) : (
+                      <p className="text-gray-300 whitespace-pre-line">{item.info}</p>
+                    )}
                   </div>
                 </motion.div>
               ))}

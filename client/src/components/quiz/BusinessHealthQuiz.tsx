@@ -9,6 +9,7 @@ interface Question {
   id: string;
   text: string;
   textAr: string;
+  category: 'operations' | 'culture' | 'strategy' | 'finance' | 'innovation' | 'leadership' | 'marketing';
 }
 
 const BusinessHealthQuiz: React.FC = () => {
@@ -21,6 +22,11 @@ const BusinessHealthQuiz: React.FC = () => {
     q3: null,
     q4: null,
     q5: null,
+    q6: null,
+    q7: null,
+    q8: null,
+    q9: null,
+    q10: null,
   });
   const { toast } = useToast();
 
@@ -28,35 +34,110 @@ const BusinessHealthQuiz: React.FC = () => {
     {
       id: 'q1',
       text: 'Does your team spend >30% of time fixing operational fires?',
-      textAr: 'هل يقضي فريقك أكثر من 30٪ من الوقت في إصلاح مشكلات تشغيلية طارئة؟'
+      textAr: 'هل يقضي فريقك أكثر من 30٪ من الوقت في إصلاح مشكلات تشغيلية طارئة؟',
+      category: 'operations'
     },
     {
       id: 'q2',
       text: 'Is your customer retention rate below industry benchmarks?',
-      textAr: 'هل معدل احتفاظك بالعملاء أقل من معايير الصناعة؟'
+      textAr: 'هل معدل احتفاظك بالعملاء أقل من معايير الصناعة؟',
+      category: 'marketing'
     },
     {
       id: 'q3',
       text: 'Have you struggled to implement your strategic initiatives?',
-      textAr: 'هل واجهت صعوبة في تنفيذ مبادراتك الاستراتيجية؟'
+      textAr: 'هل واجهت صعوبة في تنفيذ مبادراتك الاستراتيجية؟',
+      category: 'strategy'
     },
     {
       id: 'q4',
       text: 'Is your profit margin declining year-over-year?',
-      textAr: 'هل هامش الربح لديك ينخفض عامًا بعد عام؟'
+      textAr: 'هل هامش الربح لديك ينخفض عامًا بعد عام؟',
+      category: 'finance'
     },
     {
       id: 'q5',
       text: 'Do you lack a clear innovation roadmap?',
-      textAr: 'هل تفتقر إلى خارطة طريق واضحة للابتكار؟'
+      textAr: 'هل تفتقر إلى خارطة طريق واضحة للابتكار؟',
+      category: 'innovation'
+    },
+    {
+      id: 'q6',
+      text: 'Is your employee turnover rate above industry average?',
+      textAr: 'هل معدل دوران الموظفين لديك أعلى من متوسط الصناعة؟',
+      category: 'culture'
+    },
+    {
+      id: 'q7',
+      text: 'Do you struggle to attract and retain top talent?',
+      textAr: 'هل تواجه صعوبة في جذب والاحتفاظ بالمواهب المتميزة؟',
+      category: 'leadership'
+    },
+    {
+      id: 'q8',
+      text: 'Is your business overly dependent on one customer or market segment?',
+      textAr: 'هل يعتمد عملك بشكل مفرط على عميل واحد أو شريحة سوق واحدة؟',
+      category: 'strategy'
+    },
+    {
+      id: 'q9',
+      text: 'Do you lack clear metrics to measure business performance?',
+      textAr: 'هل تفتقر إلى مقاييس واضحة لقياس أداء الأعمال؟',
+      category: 'operations'
+    },
+    {
+      id: 'q10',
+      text: 'Are your marketing efforts producing diminishing returns?',
+      textAr: 'هل تنتج جهود التسويق الخاصة بك عوائد متناقصة؟',
+      category: 'marketing'
     }
   ];
 
   const calculateScore = (): number => {
     // Count how many "yes" answers (problems) there are
     const problemsCount = Object.values(answers).filter(a => a === 'yes').length;
-    // Score is inverse to number of problems (5 problems = 0, 0 problems = 100)
-    return Math.max(0, 100 - (problemsCount * 20));
+    // Score is inverse to number of problems (10 problems = 0, 0 problems = 100)
+    return Math.max(0, 100 - (problemsCount * 10));
+  };
+  
+  const getCategoryScores = (): { [key: string]: number } => {
+    const categoryProblems: { [key: string]: number } = {
+      operations: 0,
+      culture: 0,
+      strategy: 0,
+      finance: 0,
+      innovation: 0,
+      leadership: 0,
+      marketing: 0
+    };
+    
+    // Count problems by category
+    questions.forEach(q => {
+      if (answers[q.id] === 'yes') {
+        categoryProblems[q.category]++;
+      }
+    });
+    
+    // Convert to scores (100 = best, 0 = worst)
+    const maxProblemsByCategory: { [key: string]: number } = {};
+    
+    // Count max problems possible per category
+    questions.forEach(q => {
+      if (!maxProblemsByCategory[q.category]) {
+        maxProblemsByCategory[q.category] = 0;
+      }
+      maxProblemsByCategory[q.category]++;
+    });
+    
+    // Calculate scores
+    const categoryScores: { [key: string]: number } = {};
+    Object.keys(categoryProblems).forEach(category => {
+      const problemsInCategory = categoryProblems[category];
+      const maxProblemsInCategory = maxProblemsByCategory[category] || 1;
+      categoryScores[category] = 100 - (problemsInCategory * (100 / maxProblemsInCategory));
+    });
+    
+    return categoryScores;
   };
 
   const getScoreClass = (score: number): string => {
@@ -102,6 +183,11 @@ const BusinessHealthQuiz: React.FC = () => {
         q3: null,
         q4: null,
         q5: null,
+        q6: null,
+        q7: null,
+        q8: null,
+        q9: null,
+        q10: null,
       });
     }
   };
@@ -114,11 +200,23 @@ const BusinessHealthQuiz: React.FC = () => {
       q3: null,
       q4: null,
       q5: null,
+      q6: null,
+      q7: null,
+      q8: null,
+      q9: null,
+      q10: null,
     });
   };
 
   const score = calculateScore();
+  const categoryScores = getCategoryScores();
   const scoreClass = getScoreClass(score);
+  
+  // Get weakest categories (lowest scores) for targeted recommendations
+  const sortedCategories = Object.entries(categoryScores)
+    .filter((entry) => entry[1] < 100) // Only include categories with problems
+    .sort((entryA, entryB) => entryA[1] - entryB[1]) // Sort by score ascending
+    .slice(0, 3); // Get top 3 problem areas
 
   return (
     <>
@@ -233,24 +331,64 @@ const BusinessHealthQuiz: React.FC = () => {
                       {language === 'en' ? 'Critical Areas to Address:' : 'المجالات الحرجة المطلوب معالجتها:'}
                     </h4>
                     <ul className="list-disc list-inside space-y-2 text-gray-300">
-                      <li>
-                        {language === 'en' 
-                          ? 'Operational inefficiencies costing you time and resources'
-                          : 'عدم كفاءة التشغيل تكلفك الوقت والموارد'
-                        }
-                      </li>
-                      <li>
-                        {language === 'en' 
-                          ? 'Customer retention issues impacting revenue stability'
-                          : 'مشاكل الاحتفاظ بالعملاء تؤثر على استقرار الإيرادات'
-                        }
-                      </li>
-                      <li>
-                        {language === 'en' 
-                          ? 'Strategic implementation gaps limiting growth potential'
-                          : 'فجوات التنفيذ الاستراتيجي تحد من إمكانات النمو'
-                        }
-                      </li>
+                      {sortedCategories.length > 0 ? (
+                        sortedCategories.map(([category, categoryScore], index) => {
+                          const getIssueName = (cat: string) => {
+                            switch(cat) {
+                              case 'operations':
+                                return language === 'en' 
+                                  ? 'Operational inefficiencies costing you time and resources'
+                                  : 'عدم كفاءة التشغيل تكلفك الوقت والموارد';
+                              case 'culture':
+                                return language === 'en'
+                                  ? 'Cultural and employee engagement challenges within your organization'
+                                  : 'تحديات ثقافية ومشاركة الموظفين داخل مؤسستك';
+                              case 'strategy':
+                                return language === 'en'
+                                  ? 'Strategic implementation gaps limiting growth potential'
+                                  : 'فجوات التنفيذ الاستراتيجي تحد من إمكانات النمو';
+                              case 'finance':
+                                return language === 'en'
+                                  ? 'Financial performance issues impacting profitability'
+                                  : 'مشاكل الأداء المالي التي تؤثر على الربحية';
+                              case 'innovation':
+                                return language === 'en'
+                                  ? 'Innovation roadblocks preventing competitive advantages'
+                                  : 'عوائق الابتكار التي تمنع المزايا التنافسية';
+                              case 'leadership':
+                                return language === 'en'
+                                  ? 'Leadership capacity gaps impacting talent retention and development'
+                                  : 'فجوات في قدرات القيادة تؤثر على الاحتفاظ بالمواهب وتطويرها';
+                              case 'marketing':
+                                return language === 'en'
+                                  ? 'Marketing effectiveness and customer retention issues'
+                                  : 'مشاكل فعالية التسويق والاحتفاظ بالعملاء';
+                              default:
+                                return language === 'en'
+                                  ? 'Business optimization opportunities'
+                                  : 'فرص تحسين الأعمال';
+                            }
+                          };
+                          
+                          return (
+                            <li key={index} className="mb-2">
+                              <div className="flex items-center">
+                                <span>{getIssueName(category)}</span>
+                                <span className={`ml-2 ${getScoreClass(categoryScore)}`}>
+                                  ({Math.round(categoryScore)}/100)
+                                </span>
+                              </div>
+                            </li>
+                          );
+                        })
+                      ) : (
+                        <li>
+                          {language === 'en'
+                            ? 'Your business appears to be in good health across all measured areas.'
+                            : 'يبدو أن عملك يتمتع بصحة جيدة في جميع المجالات المقاسة.'
+                          }
+                        </li>
+                      )}
                     </ul>
                   </div>
                   

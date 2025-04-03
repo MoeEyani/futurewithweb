@@ -1,4 +1,5 @@
 import React from 'react';
+import logoImage from '@assets/Future with (Final Logo) transparent background with slogan-01.png';
 
 interface LogoProps {
   className?: string;
@@ -15,22 +16,11 @@ const Logo: React.FC<LogoProps> = ({ className = '', size = 'md', withText = fal
 
   return (
     <div className={`inline-flex items-center ${className}`}>
-      <svg
-        viewBox="0 0 600 400"
-        className={`${sizeClasses[size]}`}
-        role="img"
-        aria-label="Future With Logo"
-      >
-        <g>
-          <rect x="180" y="200" width="60" height="120" rx="10" fill="#F05454" />
-          <rect x="260" y="240" width="60" height="80" rx="10" fill="#FFD166" />
-          <rect x="260" y="160" width="60" height="60" rx="10" fill="#FFD166" />
-          <rect x="340" y="160" width="60" height="60" rx="10" fill="#4CAF50" />
-          <rect x="340" y="240" width="60" height="60" rx="10" fill="#4CAF50" />
-          <rect x="340" y="320" width="60" height="60" rx="10" fill="#4CAF50" />
-          <rect x="420" y="80" width="60" height="240" rx="10" fill="#4E89AE" />
-        </g>
-      </svg>
+      <img 
+        src={logoImage} 
+        alt="Future With Logo" 
+        className={`${sizeClasses[size]} object-contain`}
+      />
       
       {withText && (
         <div className="ml-2 font-space font-bold text-white text-xl md:text-2xl">
